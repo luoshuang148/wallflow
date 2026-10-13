@@ -1,0 +1,55 @@
+# macOS / IDE
+.DS_Store
+.AppleDouble
+._*
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# SwiftPM / generated deliverables
+.build/
+.swiftpm/
+/dist/
+/build/
+/work/
+/outputs/
+*.app/
+*.zip
+*.dmg
+*.pkg
+
+# Local tools, downloads and wallpapers
+SteamTools/
+MediaTools/
+SteamCMD/
+ConvertedVideos/
+ConvertedWallpapers/
+Wallpapers/
+steamapps/
+*.[mM][pP]4
+*.[mM][oO][vV]
+*.[mM][kK][vV]
+*.[wW][eE][bB][mM]
+*.[aA][vV][iI]
+*.[mM]4[vV]
+
+# Local state, Steam sessions and logs
+state.json
+workshop.json
+account-name.txt
+*.vdf
+*.acf
+ssfn*
+logs/
+userdata/
+*.log
+
+# Credentials and signing material
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.mobileprovision
+credentials*
+secrets*

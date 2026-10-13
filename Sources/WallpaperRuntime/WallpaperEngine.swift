@@ -1,0 +1,265 @@
+import AppKit
+import AVFoundation
+import WallpaperCore
+
+public struct Display: Identifiable {
+    public let id: String
+    public let name: String
+    public let screen: NSScreen
+    public init(id: String, name: String, screen: NSScreen) { self.id = id; self.name = name; self.screen = screen }
+    @MainActor public static var current: [Display] {
+        NSScreen.screens.compactMap { screen in
+            guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
+            let displayID = CGDirectDisplayID(number.uint32Value)
+            let id: String
+            if let uuid = CGDisplayCreateUUIDFromDisplayID(displayID)?.takeRetainedValue() {
+                id = CFUUIDCreateString(nil, uuid) as String
+            } else { id = "display-\(displayID)" }
+            return Display(id: id, name: screen.localizedName, screen: screen)
+        }
+    }
+}
+private final class DesktopWindow: NSWindow {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+}
+@MainActor public final class WallpaperSession {
+    public let window: NSWindow
+    public let player: AVQueuePlayer
+    public private(set) var looper: AVPlayerLooper?
+    public let projectID: String
+    public let videoPath: String
+    let token = UUID()
+    private let videoLayer: AVPlayerLayer
+    private var observations: [NSKeyValueObservation] = []
+    private var stopped = false
+    private var failure: String?
+    private var installed = false
+    private var occlusionObserver: NSObjectProtocol?
+    private let onError: (WallpaperSession, String) -> Void
+    public var isOccluded: Bool { installed && !window.occlusionState.contains(.visible) }
+
+    init(project: WallpaperProject, fit: FitMode, screen: NSScreen, onOcclusionChange: @escaping (WallpaperSession) -> Void, onError: @escaping (WallpaperSession, String) -> Void) {
+        self.onError = onError
+        projectID = project.id
+        videoPath = project.videoPath
+        player = AVQueuePlayer()
+        player.isMuted = true
+        player.preventsDisplaySleepDuringVideoPlayback = false
+        videoLayer = AVPlayerLayer(player: player)
+        videoLayer.videoGravity = fit == .fill ? .resizeAspectFill : .resizeAspect
+        videoLayer.backgroundColor = NSColor.black.cgColor
+        window = DesktopWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false, screen: screen)
+        window.isReleasedWhenClosed = false
+        window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)) + 1)
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenNone]
+        window.ignoresMouseEvents = true
+        window.hidesOnDeactivate = false
+        window.isOpaque = true
+        window.backgroundColor = .black
+        window.hasShadow = false
+        window.setFrame(screen.frame, display: true)
+        let view = NSView(frame: NSRect(origin: .zero, size: screen.frame.size))
+        view.wantsLayer = true
+        view.layer = videoLayer
+        window.contentView = view
+        occlusionObserver = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.installed, !self.stopped else { return }
+                onOcclusionChange(self)
+            }
+        }
+        looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: URL(fileURLWithPath: project.videoPath)))
+        observations.append(player.observe(\.status, options: [.new]) { [weak self] player, _ in
+            guard player.status == .failed else { return }
+            let text = player.error?.localizedDescription ?? "视频播放失败。"
+            Task { @MainActor in self?.handleFailure(text) }
+        })
+        if let looper {
+            observations.append(looper.observe(\.status, options: [.new]) { [weak self] looper, _ in
+                guard looper.status == .failed else { return }
+                let text = looper.error?.localizedDescription ?? "视频循环播放失败。"
+                Task { @MainActor in self?.handleFailure(text) }
+            })
+        }
+    }
+    func handleFailure(_ message: String) {
+        guard !stopped else { return }
+        failure = message
+        if installed { onError(self, message) }
+    }
+    func waitUntilReady() async throws {
+        let deadline = Date().addingTimeInterval(8)
+        while Date() < deadline {
+            try Task.checkCancellation()
+            if stopped { throw CancellationError() }
+            if let failure { throw WallpaperError.message(failure) }
+            if player.currentItem?.status == .failed {
+                throw WallpaperError.message(player.currentItem?.error?.localizedDescription ?? "视频解码失败。")
+            }
+            if player.status == .failed || looper?.status == .failed { throw WallpaperError.message("视频播放器无法启动。") }
+            if player.currentItem?.status == .readyToPlay && videoLayer.isReadyForDisplay { return }
+            try await Task.sleep(for: .milliseconds(40))
+        }
+        throw WallpaperError.message("播放器准备超时，请重新尝试。")
+    }
+    func show() { installed = true; window.orderBack(nil) }
+    func update(screen: NSScreen, fit: FitMode, playing: Bool) {
+        window.setFrame(screen.frame, display: true)
+        videoLayer.contentsScale = screen.backingScaleFactor
+        videoLayer.videoGravity = fit == .fill ? .resizeAspectFill : .resizeAspect
+        setPlaying(playing)
+    }
+    func setPlaying(_ playing: Bool) {
+        guard !stopped else { return }
+        if playing { player.play() } else { player.pause() }
+    }
+    func stop() {
+        guard !stopped else { return }
+        stopped = true
+        if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
+        occlusionObserver = nil
+        observations.removeAll()
+        player.pause()
+        looper?.disableLooping()
+        looper = nil
+        player.removeAllItems()
+        videoLayer.player = nil
+        window.orderOut(nil)
+        window.close()
+    }
+}
+@MainActor public final class PreparedWallpaperChange {
+    fileprivate let ticket: Int
+    fileprivate let candidates: [String: WallpaperSession]
+    fileprivate let state: AppState
+    fileprivate let displays: [Display]
+    fileprivate var finished = false
+    fileprivate init(ticket: Int, candidates: [String: WallpaperSession], state: AppState, displays: [Display]) {
+        self.ticket = ticket; self.candidates = candidates; self.state = state; self.displays = displays
+    }
+}
+@MainActor public final class WallpaperEngine {
+    public private(set) var sessions: [String: WallpaperSession] = [:]
+    public var onError: ((String) -> Void)?
+    public var onPlaybackChange: (() -> Void)?
+    private var pending: [UUID: WallpaperSession] = [:]
+    private var revision = 0
+    private var playbackEnabled = true
+    private var pauseWhenOccluded = false
+    private var audioMuted = false
+    private var audioDisplayOrder: [String] = []
+    private var refreshTask: Task<Void, Never>?
+    public init() {}
+
+    public func prepare(state: AppState, displays: [Display], shouldPlay: Bool) async throws -> PreparedWallpaperChange {
+        revision += 1
+        let ticket = revision
+        playbackEnabled = shouldPlay
+        var candidates: [String: WallpaperSession] = [:]
+        do {
+            for display in displays {
+                guard let assignment = state.assignment(for: display.id),
+                      let project = state.projects.first(where: { $0.id == assignment.projectID }) else { continue }
+                if let existing = sessions[display.id], existing.projectID == project.id, existing.videoPath == project.videoPath { continue }
+                let fresh = try WallpaperProject.load(folder: URL(fileURLWithPath: project.folderPath))
+                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message("视频文件已改变，请重新导入。") }
+                let session = WallpaperSession(project: fresh.identifyingSourceFolder(project.sourceFolderPath), fit: assignment.fit, screen: display.screen, onOcclusionChange: { [weak self] changed in
+                    guard let self, self.sessions[display.id] === changed else { return }
+                    self.applyPlayback()
+                }) { [weak self] failed, message in
+                    guard let self, self.sessions[display.id] === failed else { return }
+                    self.sessions.removeValue(forKey: display.id)?.stop()
+                    self.applyPlayback()
+                    self.onError?(message)
+                }
+                candidates[display.id] = session
+                pending[session.token] = session
+                session.update(screen: display.screen, fit: assignment.fit, playing: playbackEnabled)
+            }
+            for session in candidates.values { try await session.waitUntilReady() }
+            guard revision == ticket, !Task.isCancelled else { throw CancellationError() }
+            return PreparedWallpaperChange(ticket: ticket, candidates: candidates, state: state, displays: displays)
+        } catch {
+            for session in candidates.values { pending.removeValue(forKey: session.token); session.stop() }
+            throw error
+        }
+    }
+    public func commit(_ change: PreparedWallpaperChange, shouldPlay: Bool, isMuted: Bool? = nil) throws {
+        guard !change.finished, change.ticket == revision else { discard(change); throw CancellationError() }
+        playbackEnabled = shouldPlay
+        audioMuted = isMuted ?? change.state.isMuted
+        audioDisplayOrder = change.displays.map(\.id)
+        let online = Set(change.displays.map(\.id))
+        for id in Array(sessions.keys) where !online.contains(id) { sessions.removeValue(forKey: id)?.stop() }
+        for display in change.displays {
+            guard let assignment = change.state.assignment(for: display.id),
+                  change.state.projects.contains(where: { $0.id == assignment.projectID }) else {
+                sessions.removeValue(forKey: display.id)?.stop(); continue
+            }
+            if let new = change.candidates[display.id] {
+                let old = sessions.updateValue(new, forKey: display.id)
+                pending.removeValue(forKey: new.token)
+                new.update(screen: display.screen, fit: assignment.fit, playing: shouldPlay)
+                new.show()
+                old?.stop()
+            } else { sessions[display.id]?.update(screen: display.screen, fit: assignment.fit, playing: shouldPlay) }
+        }
+        change.finished = true
+        applyPlayback()
+    }
+    public func discard(_ change: PreparedWallpaperChange) {
+        guard !change.finished else { return }
+        change.finished = true
+        for session in change.candidates.values { pending.removeValue(forKey: session.token); session.stop() }
+    }
+    public func reconcile(state: AppState, displays: [Display], shouldPlay: Bool) {
+        refreshTask?.cancel()
+        playbackEnabled = shouldPlay
+        audioMuted = state.isMuted
+        audioDisplayOrder = displays.map(\.id)
+        let online = Set(displays.map(\.id))
+        for id in Array(sessions.keys) where !online.contains(id) { sessions.removeValue(forKey: id)?.stop() }
+        applyPlayback()
+        refreshTask = Task { [weak self] in
+            guard let self, !Task.isCancelled else { return }
+            do {
+                let change = try await self.prepare(state: state, displays: displays, shouldPlay: self.playbackEnabled)
+                defer { self.discard(change) }
+                try self.commit(change, shouldPlay: self.playbackEnabled, isMuted: self.audioMuted)
+            } catch is CancellationError { }
+            catch { self.onError?(error.localizedDescription) }
+        }
+    }
+    public func setPlaying(_ playing: Bool) {
+        playbackEnabled = playing
+        applyPlayback()
+        for session in pending.values { session.setPlaying(playing) }
+    }
+    public func setOcclusionPolicy(_ enabled: Bool) {
+        pauseWhenOccluded = enabled
+        applyPlayback()
+    }
+    public func setMuted(_ muted: Bool) { audioMuted = muted; applyPlayback() }
+    private func applyPlayback() {
+        let audible = audioMuted || !playbackEnabled ? nil : audioDisplayOrder.first { id in
+            guard let session = sessions[id] else { return false }
+            return !(pauseWhenOccluded && session.isOccluded)
+        }
+        for (id, session) in sessions where id != audible { session.player.isMuted = true }
+        for session in sessions.values {
+            session.setPlaying(playbackEnabled && !(pauseWhenOccluded && session.isOccluded))
+        }
+        if let audible { sessions[audible]?.player.isMuted = false }
+        onPlaybackChange?()
+    }
+    public func stop() {
+        revision += 1
+        refreshTask?.cancel()
+        refreshTask = nil
+        for session in sessions.values { session.stop() }
+        for session in pending.values { session.stop() }
+        sessions.removeAll()
+        pending.removeAll()
+    }
+}
