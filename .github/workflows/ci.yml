@@ -1,0 +1,45 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [main, 'codex/**', 'feat/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+      - name: Run default tests
+        run: swift test
+      - name: Build and verify release app
+        run: |
+          ./build.sh
+          codesign --verify --deep --strict dist/WallFlow.app
+          file dist/WallFlow.app/Contents/MacOS/VideoWallpaper
+      - name: Archive CI app
+        run: ditto -c -k --norsrc --noextattr --keepParent dist/WallFlow.app dist/WallFlow-CI.zip
+      - name: Upload CI build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: WallFlow-CI-${{ github.sha }}
+          path: dist/WallFlow-CI.zip
+          if-no-files-found: error
+          retention-days: 7

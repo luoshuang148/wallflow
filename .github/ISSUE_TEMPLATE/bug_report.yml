@@ -1,0 +1,39 @@
+name: 问题反馈 / Bug report
+description: 报告可复现的问题 / Report a reproducible problem
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: 请先查看已知问题。不要上传 Steam 凭据、会话文件、完整状态文件或无权分享的壁纸；日志与截图请脱敏。安全漏洞请按 SECURITY.md 私下报告。
+  - type: input
+    id: version
+    attributes:
+      label: WallFlow 版本 / Version
+      placeholder: 0.7.1 (build 16)
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 系统、芯片和显示器 / macOS, chip, displays
+      placeholder: macOS 版本，M 系列或 Intel，显示器数量
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      placeholder: 从打开应用开始，描述触发问题的操作。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期与实际结果 / Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 媒体、工具和脱敏日志 / Media, tools, sanitized logs
+      description: 如相关，请注明视频格式/编码、声音设置、FFmpeg/SteamCMD 版本和最小样本。不要粘贴账号或会话数据。
