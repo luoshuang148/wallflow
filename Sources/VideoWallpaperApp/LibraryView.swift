@@ -147,7 +147,7 @@ struct LibraryView: View {
     private func detail(_ project: WallpaperProject) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(spacing: 10) {
-                WallpaperPreview(path: project.previewPath)
+                WallpaperPreview(project:project,active:!showsSettings && !showsWorkshop && renamingProject == nil)
                 HStack {
                     Spacer()
                     if let info = model.mediaInfo[project.id] {
@@ -327,25 +327,39 @@ struct PerformanceView: View {
 }
 
 private struct WallpaperPreview: View {
-    let path: String?
+    let project: WallpaperProject
+    let active: Bool
+    @StateObject private var preview = VideoPreviewModel()
+    @State private var frameReady = false
+    @State private var surfaceVisible = false
     var body: some View {
-        let image = path.flatMap { NSImage(contentsOfFile: $0) }
-        let size = image?.size ?? NSSize(width: 16, height: 9)
-        let ratio = size.width > 0 && size.height > 0 ? size.width / size.height : 16.0 / 9.0
+        let image = project.previewPath.flatMap { NSImage(contentsOfFile:$0) }
+        let size = image?.size ?? NSSize(width:16,height:9)
+        let posterRatio = size.width > 0 && size.height > 0 ? size.width/size.height : 16.0/9.0
+        let ratio = frameReady ? (preview.aspectRatio ?? posterRatio) : posterRatio
         GeometryReader { geometry in
-            let height = min(248, geometry.size.width / ratio)
-            Group {
-                if let image {
-                    Image(nsImage: image).resizable().scaledToFit()
-                } else {
-                    Thumbnail(path: nil)
+            let height = min(248,geometry.size.width/ratio)
+            ZStack {
+                if let image { Image(nsImage:image).resizable().scaledToFit() }
+                else { Thumbnail(path:nil) }
+                VideoPreviewSurface(player:preview.player,onVisibility:{ visible in
+                    surfaceVisible = visible
+                    preview.setVisible(visible && active)
+                },onReady:{ frameReady = $0 })
+                    .opacity(frameReady ? 1 : 0)
+                if let message = preview.errorMessage {
+                    VStack { HStack { Spacer(); Image(systemName:"exclamationmark.triangle.fill").foregroundStyle(.orange).help(message) }; Spacer() }.padding(10)
                 }
             }
-            .frame(width: height * ratio, height: height)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .shadow(color: .black.opacity(0.10), radius: 10, y: 3)
-            .frame(width: geometry.size.width, height: geometry.size.height)
-        }.frame(height: 248)
+            .frame(width:height*ratio,height:height)
+            .clipShape(RoundedRectangle(cornerRadius:14))
+            .shadow(color:.black.opacity(0.1),radius:10,y:3)
+            .frame(width:geometry.size.width,height:geometry.size.height)
+        }.frame(height:248)
+        .onAppear { preview.setProject(project) }
+        .onChange(of:project.id + "\n" + project.videoPath) { _,_ in frameReady = false; preview.setProject(project) }
+        .onChange(of:active) { _,value in preview.setVisible(surfaceVisible && value) }
+        .onDisappear { preview.stop() }
     }
 }
 
