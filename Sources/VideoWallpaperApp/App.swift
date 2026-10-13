@@ -26,6 +26,7 @@ import WallpaperRuntime
     private var startup = LoginStartupModel()
     private var applicationMonitor: ApplicationMonitor?
     private var playlistTimer: Timer?
+    private var terminationStarted = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -130,6 +131,33 @@ import WallpaperRuntime
     @objc private func quit() { NSApplication.shared.terminate(nil) }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showLibrary(); return true }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard model != nil else { return .terminateNow }
+        guard !terminationStarted else { return .terminateLater }
+        terminationStarted = true
+        playlistTimer?.invalidate()
+        applicationMonitor?.stop()
+        powerMonitor?.stop()
+        workshop?.shutdown()
+        window?.orderOut(nil)
+        let wallpapers = model.prepareForTermination()
+        let keeper = StaticWallpaperKeeper(directory:model.storeURL.deletingLastPathComponent().appendingPathComponent("ExitWallpapers",isDirectory:true))
+        Task { @MainActor in
+            while !wallpapers.isEmpty {
+                let errors = await keeper.preserve(wallpapers)
+                if errors.isEmpty { break }
+                let alert = NSAlert()
+                alert.messageText = "无法保留部分屏幕的壁纸"
+                alert.informativeText = errors.joined(separator:"\n")
+                alert.addButton(withTitle:"重试")
+                alert.addButton(withTitle:"仍然退出")
+                sender.activate(ignoringOtherApps:true)
+                if alert.runModal() != .alertFirstButtonReturn { break }
+            }
+            sender.reply(toApplicationShouldTerminate:true)
+        }
+        return .terminateLater
+    }
     func applicationWillTerminate(_ notification: Notification) {
         playlistTimer?.invalidate()
         applicationMonitor?.stop()

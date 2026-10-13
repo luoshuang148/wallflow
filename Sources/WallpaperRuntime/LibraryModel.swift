@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import AVFoundation
 import WallpaperCore
 
 @MainActor public final class LibraryModel: ObservableObject {
@@ -23,6 +24,7 @@ import WallpaperCore
     private var persistenceBlocked = false
     private var onBattery = false
     private var lowPowerMode = false
+    private var terminating = false
 
     public init(storeURL: URL) {
         self.storeURL = storeURL
@@ -44,6 +46,7 @@ import WallpaperCore
         engine.setMuted(state.isMuted)
     }
     public func restore() async {
+        guard !terminating else { return }
         let ticket = beginOperation()
         defer { endOperation() }
         var restored: Set<String> = []
@@ -75,6 +78,7 @@ import WallpaperCore
         catch { errorMessage = error.localizedDescription }
     }
     @discardableResult public func importFolder(_ folder: URL, onProgress: ((String) -> Void)? = nil) async -> String? {
+        guard !terminating else { return nil }
         let ticket = beginOperation()
         defer { conversions.removeValue(forKey: ticket); if ticket == generation { importStatus = nil }; endOperation() }
         do {
@@ -108,11 +112,31 @@ import WallpaperCore
             return nil
         }
     }
-    public func shutdown() { for task in conversions.values { task.cancel() } }
+    public func shutdown() {
+        terminating = true
+        generation += 1
+        for task in conversions.values { task.cancel() }
+        engine.freezeForTermination()
+    }
+    public func prepareForTermination() -> [ExitWallpaper] {
+        shutdown()
+        return displays.compactMap { display in
+            // An installed session is authoritative even if an apply is still preparing.
+            if let session = engine.sessions[display.id] {
+                return ExitWallpaper(display:display,videoURL:URL(fileURLWithPath:session.videoPath),time:session.player.currentTime(),fit:session.fit)
+            }
+            guard let assignment = state.assignment(for:display.id),
+                  let project = state.projects.first(where:{ $0.id == assignment.projectID }),
+                  let fresh = try? WallpaperProject.load(folder:URL(fileURLWithPath:project.folderPath)),
+                  fresh.videoPath == project.videoPath else { return nil }
+            return ExitWallpaper(display:display,videoURL:URL(fileURLWithPath:project.videoPath),time:.zero,fit:assignment.fit)
+        }
+    }
     public func apply(projectID: String, target: String?, fit: FitMode) async {
         _ = await applyProject(projectID:projectID,target:target,fit:fit,fromPlaylist:false)
     }
     private func applyProject(projectID: String, target: String?, fit: FitMode, fromPlaylist: Bool) async -> Bool {
+        guard !terminating else { return false }
         let playlistSettings = state.playlist
         let ticket = beginOperation()
         defer { endOperation() }
@@ -195,6 +219,7 @@ import WallpaperCore
         applyRuntimePolicy()
     }
     public func refreshDisplays() {
+        guard !terminating else { return }
         generation += 1
         displays = Display.current
         reconcile()
@@ -232,6 +257,7 @@ import WallpaperCore
         return engine.sessions[displayID] == nil ? "等待播放" : (applicationEffects.muted ? "播放中 · 规则静音" : "播放中")
     }
     private func reconcile() {
+        guard !terminating else { return }
         guard !applicationEffects.stopped else { engine.stop(); return }
         var playable = state
         playable.isMuted = effectiveMuted
@@ -240,6 +266,7 @@ import WallpaperCore
     }
     private var effectiveMuted: Bool { state.isMuted || applicationEffects.muted }
     private func applyRuntimePolicy() {
+        guard !terminating else { return }
         if applicationEffects.stopped { engine.stop(); return }
         engine.setMuted(effectiveMuted)
         engine.setPlaying(intent.shouldPlay)
@@ -298,6 +325,7 @@ import WallpaperCore
         return (ignoringBusy || !isBusy) && intent.shouldPlay && !applicationEffects.stopped && targetAvailable && !allOccluded
     }
     public func tickPlaylist(now: Date = Date(), calendar: Calendar = .current) async {
+        guard !terminating else { return }
         let settings = state.playlist
         let current = settings.targetDisplayID.map { state.assignment(for:$0) } ?? state.defaultAssignment
         let ids = state.projects.filter { readyProjects.contains($0.id) }.map(\.id)
@@ -310,6 +338,7 @@ import WallpaperCore
         }
     }
     private func commit(_ next: AppState) throws {
+        guard !terminating else { throw CancellationError() }
         guard !persistenceBlocked else { throw WallpaperError.message("请先处理无法读取的设置文件，再重新启动软件。") }
         try StateStore.save(next, to: storeURL)
         state = next

@@ -29,6 +29,7 @@ private final class DesktopWindow: NSWindow {
     public private(set) var looper: AVPlayerLooper?
     public let projectID: String
     public let videoPath: String
+    public private(set) var fit: FitMode
     let token = UUID()
     private let videoLayer: AVPlayerLayer
     private var observations: [NSKeyValueObservation] = []
@@ -43,6 +44,7 @@ private final class DesktopWindow: NSWindow {
         self.onError = onError
         projectID = project.id
         videoPath = project.videoPath
+        self.fit = fit
         player = AVQueuePlayer()
         player.isMuted = true
         player.preventsDisplaySleepDuringVideoPlayback = false
@@ -105,6 +107,7 @@ private final class DesktopWindow: NSWindow {
     }
     func show() { installed = true; window.orderBack(nil) }
     func update(screen: NSScreen, fit: FitMode, playing: Bool) {
+        self.fit = fit
         window.setFrame(screen.frame, display: true)
         videoLayer.contentsScale = screen.backingScaleFactor
         videoLayer.videoGravity = fit == .fill ? .resizeAspectFill : .resizeAspect
@@ -150,9 +153,11 @@ private final class DesktopWindow: NSWindow {
     private var audioMuted = false
     private var audioDisplayOrder: [String] = []
     private var refreshTask: Task<Void, Never>?
+    private var terminating = false
     public init() {}
 
     public func prepare(state: AppState, displays: [Display], shouldPlay: Bool) async throws -> PreparedWallpaperChange {
+        guard !terminating else { throw CancellationError() }
         revision += 1
         let ticket = revision
         playbackEnabled = shouldPlay
@@ -214,6 +219,7 @@ private final class DesktopWindow: NSWindow {
         for session in change.candidates.values { pending.removeValue(forKey: session.token); session.stop() }
     }
     public func reconcile(state: AppState, displays: [Display], shouldPlay: Bool) {
+        guard !terminating else { return }
         refreshTask?.cancel()
         playbackEnabled = shouldPlay
         audioMuted = state.isMuted
@@ -232,6 +238,7 @@ private final class DesktopWindow: NSWindow {
         }
     }
     public func setPlaying(_ playing: Bool) {
+        guard !terminating else { return }
         playbackEnabled = playing
         applyPlayback()
         for session in pending.values { session.setPlaying(playing) }
@@ -242,6 +249,7 @@ private final class DesktopWindow: NSWindow {
     }
     public func setMuted(_ muted: Bool) { audioMuted = muted; applyPlayback() }
     private func applyPlayback() {
+        guard !terminating else { return }
         let audible = audioMuted || !playbackEnabled ? nil : audioDisplayOrder.first { id in
             guard let session = sessions[id] else { return false }
             return !(pauseWhenOccluded && session.isOccluded)
@@ -261,5 +269,14 @@ private final class DesktopWindow: NSWindow {
         for session in pending.values { session.stop() }
         sessions.removeAll()
         pending.removeAll()
+    }
+    public func freezeForTermination() {
+        terminating = true
+        revision += 1
+        refreshTask?.cancel()
+        refreshTask = nil
+        for session in pending.values { session.stop() }
+        pending.removeAll()
+        for session in sessions.values { session.player.isMuted = true; session.setPlaying(false) }
     }
 }
