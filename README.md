@@ -1,4 +1,12 @@
+<img src="docs/assets/icon.png" width="96" height="96" alt="WallFlow 图标">
+
 # WallFlow
+
+[English](README.en.md) · [下载](https://github.com/luoshuang148/wallflow/releases/latest) · [更新日志](CHANGELOG.md) · [问题反馈](https://github.com/luoshuang148/wallflow/issues/new/choose)
+
+[![macOS CI](https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml/badge.svg)](https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml)
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
+![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-black)
 
 macOS 视频动态壁纸应用。支持导入 Wallpaper Engine 视频壁纸文件夹，以及通过 Steam 创意工坊下载和导入账号订阅的视频作品。
 
@@ -18,6 +26,23 @@ macOS 视频动态壁纸应用。支持导入 Wallpaper Engine 视频壁纸文�
 - 非 MP4 或不可原生播放的视频使用 FFmpeg 转换，保留原文件。
 
 仅支持视频壁纸，不支持 Wallpaper Engine 的 Scene、网页或程序壁纸。WallFlow 是独立应用。
+
+## 下载安装
+
+1. 从 [最新 Release](https://github.com/luoshuang148/wallflow/releases/latest) 下载 `WallFlow-0.7.1-macOS-arm64.zip`，适用于 macOS 14+ 的 Apple Silicon Mac。
+2. 解压后将 `WallFlow.app` 拖入“应用程序”，再打开应用。
+3. 若 macOS 阻止打开，请按 [Apple 的说明](https://support.apple.com/zh-cn/102445)，在尝试打开后到 **系统设置 → 隐私与安全性 → 仍要打开** 为该应用确认例外。
+4. 导入自己的完整视频壁纸文件夹即可使用；下载创意工坊作品或转换视频时，再配置下方的可选工具。
+
+发布包使用本地 ad-hoc 签名，**尚无 Developer ID 签名和 Apple 公证**。Intel Mac 暂无预编译下载，源码构建也尚未在 Intel 真机完整验证。发布包不包含壁纸、SteamCMD 或 FFmpeg。
+
+Release 附带 `SHA256SUMS.txt`。把它和 ZIP 放在同一目录，可核对下载完整性：
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+更新时先从菜单栏正常退出旧版，再替换应用。保留原媒体文件和本地数据目录，已有壁纸库、屏幕分配和声音偏好会继续使用。
 
 ## 构建
 
@@ -109,6 +134,8 @@ swift test
 
 现有媒体回归样本约定为 3840×2160、约 16.67 秒。桌面集成测试需要可用的 macOS 图形会话，并会短暂创建播放器窗口；建议使用无音轨的视频副本。转换测试还需要 FFmpeg。没有这些环境时，基础测试仍可运行。
 
+CI 在 macOS 上运行默认测试、Release 构建和签名检查，并提供临时构建产物。需要个人账号或媒体的测试跳过不代表这些路径已通过验证。开发地图见 [开发说明](docs/DEVELOPMENT.md)。
+
 ## 本地数据
 
 设置位于 `~/Library/Application Support/VideoWallpaper/`：
@@ -121,3 +148,23 @@ swift test
 网页登录会话由 WebKit 管理，下载登录由 SteamCMD 管理。应用不提取或复制密码、Cookie 和登录令牌到源码仓库。
 
 `.gitignore` 排除了构建产物、视频、工具目录、本机设置、Steam 会话、日志及常见凭据文件。
+
+## 常见问题
+
+- **为什么没有 Scene 壁纸？** 当前只实现视频壁纸，不解析 Wallpaper Engine 的 Scene、网页或程序项目，也不承诺兼容全部视频编码。
+- **关闭窗口后为什么仍在播放？** 关闭窗口只收起管理界面；通过菜单栏退出会停止播放，并将当前画面保存为静态壁纸。
+- **退出后所有 Space 都会更新吗？** 只更新每块屏幕当前所在的 Space。强制结束应用不会执行保存；重开应用恢复设置，不保证从退出的准确时间点续播。
+- **网页已登录，为什么下载还要求登录？** Steam 网页和 SteamCMD 使用独立会话；创意工坊下载需要有权限访问作品的账号。
+- **转换为什么失败？** 检查 FFmpeg 是否安装、源文件是否仍可读取，以及缓存目录剩余空间。原生可播放的 MP4 无需转换。
+
+其他验证边界见 [已知问题](docs/KNOWN_ISSUES.md)。
+
+## 参与项目
+
+欢迎提交可复现的问题、文档改进和 Pull Request。开始前请阅读 [贡献指南](CONTRIBUTING.md)；涉及账号会话、目录逃逸或其他漏洞时，请按 [安全报告说明](SECURITY.md) 私下报告。
+
+WallFlow 与 Valve、Steam、Wallpaper Engine 无隶属或官方合作关系。第三方工具及壁纸资源遵循各自的许可与作者授权。
+
+## 许可证
+
+当前仓库尚未添加许可证，许可方案待项目作者确定。
