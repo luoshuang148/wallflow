@@ -32,6 +32,58 @@ final class SystemIntegrationTests: XCTestCase {
         addTeardownBlock { defaults.removePersistentDomain(forName: suite) }
         return defaults
     }
+    @MainActor func testEnabledManagementLoginMigratesToPlayerDespiteSavedDefaultMarker() {
+        let player = SimulatedLoginService(), legacy = SimulatedLoginService(), preferences = preferences()
+        legacy.status = .enabled
+        LoginStartupModel(service: legacy, preferences: preferences).setEnabled(true)
+        let service = MigratingLoginStartupService(player: player, legacy: legacy)
+        let model = LoginStartupModel(service: service, preferences: preferences)
+        model.configureDefaultIfNeeded()
+        XCTAssertTrue(model.enabled)
+        XCTAssertEqual(legacy.status, .notRegistered)
+        XCTAssertEqual(player.status, .enabled)
+    }
+    @MainActor func testFailedPlayerMigrationKeepsLegacyRegistrationAndRetries() {
+        let player = SimulatedLoginService(), legacy = SimulatedLoginService(), preferences = preferences()
+        legacy.status = .enabled
+        LoginStartupModel(service: legacy, preferences: preferences).setEnabled(true)
+        player.registrationError = NSError(domain: "PlayerLogin", code: 1, userInfo: [NSLocalizedDescriptionKey: "Player registration failed"])
+        let model = LoginStartupModel(service: MigratingLoginStartupService(player: player, legacy: legacy), preferences: preferences)
+        model.configureDefaultIfNeeded()
+        XCTAssertEqual(legacy.status, .enabled)
+        XCTAssertNotNil(model.errorMessage)
+        player.registrationError = nil
+        model.configureDefaultIfNeeded()
+        XCTAssertTrue(model.enabled)
+        XCTAssertEqual(legacy.status, .notRegistered)
+    }
+    @MainActor func testDisableAfterPartialMigrationFailureIsNotReenabledOnReopen() {
+        let player = SimulatedLoginService(), legacy = SimulatedLoginService(), preferences = preferences()
+        legacy.status = .enabled
+        legacy.unregistrationError = NSError(domain: "LegacyRemoval", code: 1)
+        let service = MigratingLoginStartupService(player: player, legacy: legacy)
+        let model = LoginStartupModel(service: service, preferences: preferences)
+        model.configureDefaultIfNeeded()
+        XCTAssertNotNil(model.errorMessage)
+        model.setEnabled(false)
+        XCTAssertNotNil(model.errorMessage, "A remaining enabled legacy item must be reported")
+        legacy.unregistrationError = nil
+        let reopened = LoginStartupModel(service: service, preferences: preferences)
+        reopened.configureDefaultIfNeeded()
+        XCTAssertFalse(reopened.enabled)
+        XCTAssertEqual(player.status, .notRegistered)
+        XCTAssertEqual(legacy.status, .notRegistered)
+    }
+    @MainActor func testRevokedLegacyConsentDoesNotEnableFreshPlayerIdentity() {
+        let player = SimulatedLoginService(), legacy = SimulatedLoginService(), preferences = preferences()
+        legacy.status = .requiresApproval
+        LoginStartupModel(service: legacy, preferences: preferences).setEnabled(true)
+        let model = LoginStartupModel(service: MigratingLoginStartupService(player: player, legacy: legacy), preferences: preferences)
+        model.configureDefaultIfNeeded()
+        XCTAssertFalse(model.enabled)
+        XCTAssertEqual(player.registrations, 0)
+        XCTAssertEqual(legacy.status, .notRegistered)
+    }
     @MainActor func testDefaultStartupEnablesOnceAndRespectsSavedDisableOnReopen() {
         let service = SimulatedLoginService(), preferences = preferences()
         let first = LoginStartupModel(service: service, preferences: preferences)
@@ -52,6 +104,16 @@ final class SystemIntegrationTests: XCTestCase {
         reopened.configureDefaultIfNeeded()
         XCTAssertFalse(reopened.enabled)
         XCTAssertEqual(service.registrations, 1)
+    }
+    @MainActor func testSavedOffDoesNotUndoLaterEnableInSystemSettings() {
+        let service = SimulatedLoginService(), preferences = preferences()
+        let model = LoginStartupModel(service: service, preferences: preferences)
+        model.configureDefaultIfNeeded()
+        model.setEnabled(false)
+        service.status = .enabled
+        let reopened = LoginStartupModel(service: service, preferences: preferences)
+        reopened.configureDefaultIfNeeded()
+        XCTAssertTrue(reopened.enabled, "The current OS choice must remain authoritative after a successful disable")
     }
     @MainActor func testDefaultStartupPendingApprovalIsNotRegisteredAgain() {
         let service = SimulatedLoginService(), preferences = preferences()

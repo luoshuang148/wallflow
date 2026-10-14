@@ -4,6 +4,28 @@ import WallpaperCore
 @testable import WallpaperRuntime
 
 @MainActor final class DesktopPlaybackHostTests: XCTestCase {
+    func testPackagedPlayerStartupQueryExitsWithoutStartingPlayback() async throws {
+        guard let appPath = ProcessInfo.processInfo.environment["WALLFLOW_PLAYER_APP"] else {
+            throw XCTSkip("Set WALLFLOW_PLAYER_APP to test the packaged startup-control mode")
+        }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let process = Process(), pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: appPath).appendingPathComponent("Contents/MacOS/WallFlowPlayer")
+        process.arguments = ["--wallflow-login-startup", "status", "--wallflow-state", root.appendingPathComponent("state.json").path]
+        process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
+        try process.run()
+        defer { if process.isRunning { process.terminate(); process.waitUntilExit() } }
+        let deadline = Date().addingTimeInterval(10)
+        while process.isRunning && Date() < deadline { try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertFalse(process.isRunning, "Startup-control mode must return without creating a playback host")
+        guard !process.isRunning else { return }
+        let reply = try XCTUnwrap((try? JSONSerialization.jsonObject(with: pipe.fileHandleForReading.readDataToEndOfFile())) as? [String: Any])
+        XCTAssertEqual(reply["bundleIdentifier"] as? String, "local.zongzihao.VideoWallpaper.Player")
+        XCTAssertEqual(reply["bundlePath"] as? String, appPath)
+        XCTAssertNotNil(reply["status"] as? Int)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("Runtime").path))
+    }
     func testPackagedHelperActuallyExitsAfterCommandNotification() async throws {
         guard let appPath = ProcessInfo.processInfo.environment["WALLFLOW_PLAYER_APP"] else {
             throw XCTSkip("Set WALLFLOW_PLAYER_APP to a built helper bundle; uses an empty temporary library")

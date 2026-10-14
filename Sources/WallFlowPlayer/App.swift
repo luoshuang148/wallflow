@@ -3,6 +3,7 @@ import WallpaperRuntime
 
 @main struct WallFlowPlayerApplication {
     @MainActor static func main() {
+        if PlayerLoginStartupCommand.performIfRequested() { return }
         let app = NSApplication.shared
         let delegate = PlayerDelegate()
         app.delegate = delegate
