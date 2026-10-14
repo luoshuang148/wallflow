@@ -2,6 +2,19 @@ import XCTest
 @testable import WallpaperCore
 
 final class SharedStateStoreTests: XCTestCase {
+    func testPlaylistDependencyIsCheckedInsideLockBeforeChangingAssignment() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("state.json")
+        let base = AppState()
+        var newer = base; newer.manuallyPaused = true
+        try StateStore.save(newer, to: url)
+        var rotation = base; rotation.defaultAssignment = Assignment(projectID: "rotation")
+        XCTAssertThrowsError(try SharedStateStore.saveChanges(base: base, next: rotation, to: url, validate: { current in
+            if current.manuallyPaused { throw CancellationError() }
+        }))
+        XCTAssertEqual(try StateStore.load(from: url), newer)
+    }
     private func store() -> URL {
         FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathComponent("state.json")
     }

@@ -77,7 +77,7 @@ import Darwin
     func testCompleteExitWaitsForLeaseRelease() async throws {
         let paths = try paths(), lease = try XCTUnwrap(PlayerLease.acquire(paths))
         _ = try status(paths)
-        let controller = BackgroundPlayerController(paths: paths, build: "test", timeout: 1) { }
+        let controller = BackgroundPlayerController(paths: paths, build: "test", timeout: 1, isProcessRunning: { _ in false }) { }
         let release = Task { @MainActor in
             while !(try paths.stopRequested(session: paths.readStatus()!.sessionID)) { try await Task.sleep(for: .milliseconds(10)) }
             lease.release()
@@ -85,5 +85,17 @@ import Darwin
         try await controller.stopAndWait()
         try await release.value
         XCTAssertFalse(try paths.hasOwner())
+    }
+    func testLeaseReleaseAloneIsNotCompleteWhilePlayerProcessStillLives() async throws {
+        let paths = try paths(), lease = try XCTUnwrap(PlayerLease.acquire(paths))
+        let current = try status(paths)
+        let controller = BackgroundPlayerController(paths: paths, build: "test", timeout: 0.2) { }
+        let release = Task { @MainActor in
+            while !(try paths.stopRequested(session: current.sessionID)) { try await Task.sleep(for: .milliseconds(10)) }
+            lease.release()
+        }
+        do { try await controller.stopAndWait(); XCTFail("Process must also exit") }
+        catch { XCTAssertTrue(error.localizedDescription.contains("仍在运行")) }
+        try await release.value
     }
 }

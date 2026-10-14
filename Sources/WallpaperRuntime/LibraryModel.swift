@@ -128,6 +128,10 @@ public enum LibraryMode { case standalone, management, player }
         for task in conversions.values { task.cancel() }
         engine.freezeForTermination()
     }
+    public func resumeManagementAfterFailedExit() {
+        guard mode == .management else { return }
+        terminating = false
+    }
     public func prepareForTermination() -> [ExitWallpaper] {
         shutdown()
         guard mode != .management else { return [] }
@@ -167,7 +171,7 @@ public enum LibraryMode { case standalone, management, player }
                 next.assignments[target] = assignment
             } else { next.applyToAll(assignment, displays: displays.map(\.id)) }
             if applicationEffects.stopped || mode == .management {
-                try commit(next)
+                try commit(next, fromPlaylist: fromPlaylist)
                 readyProjects.insert(projectID); mediaInfo[projectID] = info
                 if !fromPlaylist { playlistClock.noteManualChoice(projectID,settings:state.playlist,now:Date()) }
                 if mode != .management { engine.stop() }; errorMessage = nil
@@ -184,7 +188,7 @@ public enum LibraryMode { case standalone, management, player }
             next = state
             if let target { next.assignments[target] = assignment }
             else { next.applyToAll(assignment,displays:displays.map(\.id)) }
-            try commit(next)
+            try commit(next, fromPlaylist: fromPlaylist)
             try engine.commit(change, shouldPlay: intent.shouldPlay, isMuted: effectiveMuted)
             readyProjects.insert(projectID)
             mediaInfo[projectID] = info
@@ -353,13 +357,18 @@ public enum LibraryMode { case standalone, management, player }
             playlistClock = previousClock
         }
     }
-    private func commit(_ next: AppState) throws {
+    private func commit(_ next: AppState, fromPlaylist: Bool = false) throws {
         guard !terminating else { throw CancellationError() }
         guard !persistenceBlocked else { throw WallpaperError.message("请先处理无法读取的设置文件，再重新启动软件。") }
         if mode == .standalone {
             try StateStore.save(next, to: storeURL); state = next
         } else {
-            state = try SharedStateStore.saveChanges(base: state, next: next, to: storeURL)
+            state = try SharedStateStore.saveChanges(base: state, next: next, to: storeURL) { current in
+                if fromPlaylist && (current.playlist != self.state.playlist || current.manuallyPaused ||
+                    current.applicationRules != self.state.applicationRules || current.performance != self.state.performance) {
+                    throw CancellationError()
+                }
+            }
         }
         intent.manuallyPaused = state.manuallyPaused
     }

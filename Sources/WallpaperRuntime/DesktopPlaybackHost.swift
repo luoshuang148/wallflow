@@ -105,6 +105,8 @@ import WallpaperCore
         refreshTask?.cancel(); needsRefresh = false
         let wallpapers = model.prepareForTermination()
         try? publishStatus()
+        DistributedNotificationCenter.default().postNotificationName(BackgroundPlayerPaths.stoppingNotification,
+            object: paths.stateURL.path, userInfo: ["session": sessionID.uuidString], deliverImmediately: true)
         return wallpapers
     }
     public func finish() {

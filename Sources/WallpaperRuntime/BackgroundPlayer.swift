@@ -42,6 +42,7 @@ public struct BackgroundPlayerPaths {
     }
     public static let commandNotification = Notification.Name("local.zongzihao.WallFlow.playerCommand")
     public static let stoppedNotification = Notification.Name("local.zongzihao.WallFlow.playerStopped")
+    public static let stoppingNotification = Notification.Name("local.zongzihao.WallFlow.playerStopping")
     public init(stateURL: URL) { self.stateURL = stateURL }
     func prepareDirectory() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
@@ -118,6 +119,7 @@ public final class PlayerLease {
     private let parentAppPath: String?
     private let timeout: TimeInterval
     private let launch: () async throws -> Void
+    private let isProcessRunning: (Int32) -> Bool
 
     public convenience init(stateURL: URL = BackgroundPlayerPaths.defaultStateURL, appURL: URL = Bundle.main.bundleURL) {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "development"
@@ -130,8 +132,8 @@ public final class PlayerLease {
             _ = try await NSWorkspace.shared.openApplication(at: helper, configuration: config)
         }
     }
-    init(paths: BackgroundPlayerPaths, build: String, parentAppPath: String? = nil, timeout: TimeInterval, launch: @escaping () async throws -> Void) {
-        self.paths = paths; self.build = build; self.parentAppPath = parentAppPath; self.timeout = timeout; self.launch = launch
+    init(paths: BackgroundPlayerPaths, build: String, parentAppPath: String? = nil, timeout: TimeInterval, isProcessRunning: @escaping (Int32) -> Bool = { kill($0, 0) == 0 }, launch: @escaping () async throws -> Void) {
+        self.paths = paths; self.build = build; self.parentAppPath = parentAppPath; self.timeout = timeout; self.launch = launch; self.isProcessRunning = isProcessRunning
     }
     private func activeStatus() throws -> PlayerStatus? {
         guard try paths.hasOwner(), let owner = try paths.readOwnership(), let status = try paths.readStatus(),
@@ -175,7 +177,7 @@ public final class PlayerLease {
         try paths.requestStop(session: current.sessionID)
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
-            if !(try paths.hasOwner()) { status = nil; return }
+            if !(try paths.hasOwner()) && !isProcessRunning(current.pid) { status = nil; return }
             if let other = try paths.readStatus(), other.sessionID != current.sessionID {
                 throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
             }
