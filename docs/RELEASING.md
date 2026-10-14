@@ -5,7 +5,7 @@
 ## 1. 准备版本
 
 - 确认工作区干净，发布提交已进入远端 `main`。
-- 更新 `Resources/Info.plist` 的版本号和 build，并同步中英文 README 与 `CHANGELOG.md`。
+- 更新 `Resources/Info.plist` 的版本号和 build，并同步中英文 README、使用指南和 `CHANGELOG.md`，确保下载文件名与实际附件一致。
 - 运行 `swift test` 和 `./build.sh`；查看 CI 结果，记录失败与跳过项。
 - 对需要媒体、账号或多屏环境的验证单独记录；不要声称未运行的场景已通过。
 
@@ -27,7 +27,7 @@ WALLFLOW_APP_DIR="$release_stage/$release_name/WallFlow.app" ./build.sh
 cp README.md "$release_stage/$release_name/README.md"
 cp README.en.md "$release_stage/$release_name/README.en.md"
 cp -R docs "$release_stage/$release_name/docs"
-cp CHANGELOG.md CONTRIBUTING.md SECURITY.md "$release_stage/$release_name/"
+cp CHANGELOG.md CONTRIBUTING.md SECURITY.md SUPPORT.md "$release_stage/$release_name/"
 if [ -f LICENSE ]; then cp LICENSE "$release_stage/$release_name/LICENSE"; fi
 codesign --verify --deep --strict "$release_stage/$release_name/WallFlow.app"
 ditto -c -k --norsrc --noextattr --keepParent \

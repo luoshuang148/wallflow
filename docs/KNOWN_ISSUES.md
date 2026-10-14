@@ -24,3 +24,27 @@
 0.8.0 开发版本机默认测试执行 123 项，跳过 32 项，失败 0 项；额外启用真实公开 Steam 页面测试，WebKit 列表浏览与视频详情信息验证通过。本轮未执行真实账号的作品下载，也未重新验证原有遮挡集成场景。
 
 报告新问题时，请附版本、系统、芯片、显示器数量及复现步骤，并对日志脱敏。
+
+## English
+
+These notes primarily cover the published 0.7.1 release. Known failures and untested environments are listed separately.
+
+### Known issues
+
+- The optional occlusion integration test `PolicyRuntimeTests.testOcclusionPausesOnlyCoveredDisplayAndRespectsGlobalPause` previously failed two assertions, also reproduced at the initial `e83a208` baseline. It is skipped without media fixtures and was not rerun for 0.7.1. Multi-display occlusion behavior needs further validation.
+- `SubscriptionBrowser` and its tests produce `Any?` to `Any` compiler warnings.
+
+### Platform and behavior limits
+
+- Prebuilt downloads require macOS 14+ and Apple Silicon. Intel, other devices, and all display/power combinations have not been fully tested.
+- The app is ad-hoc signed without Developer ID signing or notarization; macOS may block first launch.
+- Normal exit saves still frames only for the current Space on each display. Force-quitting cannot save frames, and relaunch does not promise the exact previous playback position.
+- Old `ExitWallpapers/` images are retained because other Spaces may still use them.
+- Steam web structure, SteamCMD login, and access permissions depend on external services. Web login does not log into SteamCMD.
+- Only video projects are supported. Native playback depends on AVFoundation codec support; optional FFmpeg conversion may reduce quality.
+
+### Validation record
+
+The local default suite recorded for the 0.7.1 release on 2026-10-14 ran 113 tests, skipped 31, and failed none. Skips require media, tools, or account sessions and do not establish that optional integrations work. Check [Actions logs](https://github.com/luoshuang148/wallflow/actions) for current CI results.
+
+Report new issues with the app version, macOS version, chip, display count, and reproduction steps. Sanitize logs before posting.
