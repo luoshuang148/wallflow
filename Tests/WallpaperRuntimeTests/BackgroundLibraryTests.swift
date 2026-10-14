@@ -110,4 +110,37 @@ import AppKit
         XCTAssertEqual(manager.state.projects.count, 2)
         XCTAssertEqual(manager.state.defaultAssignment?.fit, .fit)
     }
+    func testPlayerRestorationDoesNotOpenUnusedLibraryFolders() async throws {
+        let (root, assigned) = try fixture(), (unusedRoot, unused) = try fixture()
+        defer { try? FileManager.default.removeItem(at: root); try? FileManager.default.removeItem(at: unusedRoot) }
+        let url = root.appendingPathComponent("state.json")
+        var base = AppState(); base.projects = [assigned, unused]; base.defaultAssignment = Assignment(projectID: assigned.id)
+        base.isMuted = true; base.performance.pauseWhenOccluded = false
+        try StateStore.save(base, to: url)
+        try FileManager.default.removeItem(at: unusedRoot.appendingPathComponent("project.json"))
+        let player = LibraryModel(storeURL: url, mode: .player); defer { player.engine.stop() }
+        await player.restore()
+        XCTAssertNil(player.errorMessage, "Unused/offline/protected folders belong to management, not playback startup")
+        XCTAssertNotNil(player.mediaInfo[assigned.id])
+        XCTAssertNil(player.mediaInfo[unused.id])
+        XCTAssertEqual(player.engine.sessions.values.first?.projectID, assigned.id)
+    }
+    func testPlayerPlaylistValidatesUnassignedVideoWhenItsTurnArrives() async throws {
+        let (root, first) = try fixture(), (secondRoot, second) = try fixture()
+        defer { try? FileManager.default.removeItem(at: root); try? FileManager.default.removeItem(at: secondRoot) }
+        let url = root.appendingPathComponent("state.json")
+        var base = AppState(); base.projects = [first, second]; base.defaultAssignment = Assignment(projectID: first.id)
+        base.isMuted = true; base.performance.pauseWhenOccluded = false
+        base.playlist.enabled = true; base.playlist.intervalMinutes = 1; base.playlist.projectIDs = [first.id, second.id]
+        try StateStore.save(base, to: url)
+        let player = LibraryModel(storeURL: url, mode: .player); defer { player.engine.stop() }
+        await player.restore()
+        XCTAssertNil(player.mediaInfo[second.id])
+        let now = Date()
+        await player.tickPlaylist(now: now)
+        await player.tickPlaylist(now: now.addingTimeInterval(61))
+        XCTAssertEqual(player.state.defaultAssignment?.projectID, second.id)
+        XCTAssertNotNil(player.mediaInfo[second.id])
+        XCTAssertEqual(player.engine.sessions.values.first?.projectID, second.id)
+    }
 }

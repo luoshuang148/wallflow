@@ -58,7 +58,11 @@ public enum LibraryMode { case standalone, management, player }
         defer { endOperation() }
         var restored: Set<String> = []
         var info: [String: MediaInfo] = [:]
-        for project in state.projects {
+        // Management validates the whole library. The helper opens only wallpapers
+        // assigned to connected screens; playlist choices are validated when selected.
+        let needed = Set(displays.compactMap { state.assignment(for: $0.id)?.projectID })
+        let restorationProjects = mode == .player ? state.projects.filter { needed.contains($0.id) } : state.projects
+        for project in restorationProjects {
             do {
                 if !revalidate, readyProjects.contains(project.id), let cached = mediaInfo[project.id] {
                     restored.insert(project.id); info[project.id] = cached; continue
@@ -242,7 +246,8 @@ public enum LibraryMode { case standalone, management, player }
         guard !terminating else { return }
         generation += 1
         displays = Display.current
-        reconcile()
+        if mode == .player { Task { [weak self] in await self?.restore(revalidate: false) } }
+        else { reconcile() }
     }
     public var shouldPlay: Bool { intent.shouldPlay }
     public var isSystemSuspended: Bool { !intent.suspensions.isEmpty }
@@ -353,7 +358,7 @@ public enum LibraryMode { case standalone, management, player }
         guard !terminating else { return }
         let settings = state.playlist
         let current = settings.targetDisplayID.map { state.assignment(for:$0) } ?? state.defaultAssignment
-        let ids = state.projects.filter { readyProjects.contains($0.id) }.map(\.id)
+        let ids = state.projects.filter { mode == .player || readyProjects.contains($0.id) }.map(\.id)
         let previousClock = playlistClock
         guard let id = playlistClock.next(settings:settings,availableIDs:ids,currentID:current?.projectID,now:now,calendar:calendar,canAdvance:playlistEligible()) else { return }
         let applied = await applyProject(projectID:id,target:settings.targetDisplayID,fit:current?.fit ?? .fill,fromPlaylist:true)

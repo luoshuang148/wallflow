@@ -1,7 +1,20 @@
 import XCTest
+import AppKit
 @testable import WallpaperRuntime
 
 @MainActor final class ManagementExitTests: XCTestCase {
+    func testManagementSheetAllowsVerifiedCompleteExitAndCommandQ() {
+        _ = NSApplication.shared
+        let parent = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 100, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let sheet = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 80, height: 80), styleMask: [.titled], backing: .buffered, defer: false)
+        parent.isReleasedWhenClosed = false; sheet.isReleasedWhenClosed = false
+        defer { parent.endSheet(sheet); sheet.orderOut(nil); parent.orderOut(nil) }
+        parent.beginSheet(sheet)
+        XCTAssertTrue(sheet.preventsApplicationTerminationWhenModal)
+        ManagementWindowPolicy.allowQuitWithPresentedSheet(in: parent)
+        XCTAssertFalse(sheet.preventsApplicationTerminationWhenModal)
+        XCTAssertTrue(parent.preventsApplicationTerminationWhenModal)
+    }
     func testCompleteExitQuiescesBeforeStopAndTerminatesOnlyAfterSuccess() async {
         var events: [String] = []
         let exit = ManagementExitCoordinator(quiesce: { events.append("quiesce") }, stop: { _ in events.append("stop") },

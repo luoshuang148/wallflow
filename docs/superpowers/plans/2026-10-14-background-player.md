@@ -1,6 +1,6 @@
 # Background Player Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Command-Q exits management while an independent player continues; Settings can stop both processes completely.
 
@@ -31,10 +31,10 @@
 
 **Interfaces:** `SharedStateStore.saveChanges(base:next:to:) -> AppState`; `LibraryModel.Mode` standalone/management/player; `reloadSharedState()`; external playback status; default standalone behavior unchanged.
 
-- [ ] Write tests for independent mute/assignment edits, nested setting merge, conflicting writes, deletion, and management restore/apply/policy paths never creating desktop sessions.
-- [ ] Run targeted tests and observe RED for missing interfaces.
-- [ ] Implement locked three-way state merge and manager/player roles; add efficient external reload without overwriting newer state or revalidating unchanged media.
-- [ ] Run targeted tests and existing media/exit/playlist regressions; expected zero failures; commit.
+- [x] Write tests for independent mute/assignment edits, nested setting merge, conflicting writes, deletion, and management restore/apply/policy paths never creating desktop sessions.
+- [x] Run targeted tests and observe RED for missing interfaces.
+- [x] Implement locked three-way state merge and manager/player roles; add efficient external reload without overwriting newer state or revalidating unchanged media.
+- [x] Run targeted tests and existing media/exit/playlist regressions; expected zero failures; commit.
 
 ### Task 2: Helper protocol, lifecycle and signed bundle
 
@@ -42,10 +42,10 @@
 
 **Interfaces:** Shared runtime paths, held singleton lease, session-bound command/status, `BackgroundPlayerController.ensureRunning()/stopAndWait()`, playback host lifecycle/telemetry, parent app reopening.
 
-- [ ] Write tests for duplicate lease exclusion/release, stale-session commands, status ownership/compatibility, startup/shutdown failures, and shared-state refresh.
-- [ ] Run targeted tests and observe RED.
-- [ ] Implement protocol, background host with existing monitors/rotation/menu behavior, controller and helper entry; package/sign nested helper before main.
-- [ ] Run targeted tests/full suite and release build; expected zero new failures and valid nested signatures; commit.
+- [x] Write tests for duplicate lease exclusion/release, stale-session commands, status ownership/compatibility, startup/shutdown failures, and shared-state refresh.
+- [x] Run targeted tests and observe RED.
+- [x] Implement protocol, background host with existing monitors/rotation/menu behavior, controller and helper entry; package/sign nested helper before main.
+- [x] Run targeted tests/full suite and release build; expected zero new failures and valid nested signatures; commit.
 
 ### Task 3: Management/Settings integration and live process proof
 
@@ -53,8 +53,8 @@
 
 **Interfaces:** Manager uses management LibraryModel and controller; Settings exposes complete exit; helper provides persistent menu entry; manager observes helper status and complete-exit events.
 
-- [ ] Write behavior tests for management shutdown preserving playback ownership and complete-exit state gates; observe RED before new behavior.
-- [ ] Connect management launch/quit/reopen and Settings action; bump0.9.0/build19 and document update/full-exit behavior.
-- [ ] Run full tests, build both apps and verify nested signatures/version/icon; obtain a fresh independent review and fix important findings with regression coverage.
-- [ ] Normally quit current0.8.0, deploy staged0.9.0, verify helper PID/session/time across management Command-Q/reopen, then verify complete exit leaves no process. Preserve user data and relaunch the usable app.
-- [ ] Commit verified work on codex/background-player; update private handoff with source/deployment/testing boundaries. Do not publish/merge remote release assets.
+- [x] Write behavior tests for management shutdown preserving playback ownership and complete-exit state gates; observe RED before new behavior.
+- [x] Connect management launch/quit/reopen and Settings action; bump0.9.0/build19 and document update/full-exit behavior.
+- [x] Run full tests, build both apps and verify nested signatures/version/icon; obtain a fresh independent review and fix important findings with regression coverage.
+- [x] Normally quit current0.8.0, deploy staged0.9.0, verify helper PID/session/time across management Command-Q/reopen, then verify complete exit leaves no process. Preserve user data and relaunch the usable app.
+- [x] Commit verified work on codex/background-player; update private handoff with source/deployment/testing boundaries. Do not publish/merge remote release assets.
