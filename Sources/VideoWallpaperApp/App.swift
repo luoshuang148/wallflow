@@ -40,8 +40,8 @@ import WallpaperRuntime
             if expectedSession == nil { await self.startupTask?.value }
             else { self.startupTask?.cancel() }
             try await self.player.stopAndWait(expectedSession: expectedSession)
-        }, recover: { [weak self] in self?.model.resumeManagementAfterFailedExit() }, terminate: {
-            NSApplication.shared.terminate(nil)
+        }, recover: { [weak self] in self?.model.resumeManagementAfterFailedExit() }, terminate: { [weak self] in
+            self?.quit()
         })
         setupMainMenu()
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 690),
@@ -144,7 +144,10 @@ import WallpaperRuntime
         window?.makeFirstResponder(nil)
         DispatchQueue.main.async { [weak self] in self?.window?.makeFirstResponder(nil) }
     }
-    @objc private func quit() { NSApplication.shared.terminate(nil) }
+    @objc private func quit() {
+        if let window { ManagementWindowPolicy.allowQuitWithPresentedSheet(in: window) }
+        NSApplication.shared.terminate(nil)
+    }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showLibrary(); return true }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
