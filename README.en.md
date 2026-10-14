@@ -1,61 +1,94 @@
-<img src="docs/assets/icon.png" width="96" height="96" alt="WallFlow icon">
+<p align="center">
+  <img src="docs/assets/icon.png" width="88" height="88" alt="WallFlow icon">
+</p>
 
-# WallFlow
+<h1 align="center">WallFlow</h1>
+<p align="center"><strong>Bring motion to your Mac.</strong><br>A native macOS video wallpaper app for your favorite videos, on every display.</p>
 
-[简体中文](README.md) · [Download](https://github.com/luoshuang148/wallflow/releases/latest) · [Changelog](CHANGELOG.md) · [Report an issue](https://github.com/luoshuang148/wallflow/issues/new/choose)
+<p align="center">
+  <a href="README.md">简体中文</a> ·
+  <a href="https://github.com/luoshuang148/wallflow/releases/latest">Download</a> ·
+  <a href="docs/USER_GUIDE.en.md">User guide</a> ·
+  <a href="https://github.com/luoshuang148/wallflow/issues/new/choose">Feedback</a>
+</p>
 
-[![macOS CI](https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml/badge.svg)](https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://github.com/luoshuang148/wallflow/releases/latest"><img src="https://img.shields.io/github/v/release/luoshuang148/wallflow?label=release&amp;color=2675d8" alt="Latest release"></a>
+  <a href="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml"><img src="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml/badge.svg" alt="macOS CI"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-555555?logo=apple&amp;logoColor=white" alt="macOS 14 or newer">
+  <img src="https://img.shields.io/badge/download-Apple%20Silicon-2675d8" alt="Apple Silicon download">
+</p>
 
-A native macOS video wallpaper app built with SwiftUI, AppKit, and AVFoundation. Import complete Wallpaper Engine **video** wallpaper folders, download Workshop videos with SteamCMD, or browse your account's subscribed videos. The application interface is currently in Simplified Chinese.
+![WallFlow brand illustration: flowing video across two displays, not an app screenshot](docs/assets/hero.svg)
 
-Current version: **0.7.1 (build 16)**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
+WallFlow is for Mac users who want video wallpapers, a personal wallpaper library, or support for importing Wallpaper Engine video projects. Built with SwiftUI, AppKit, and AVFoundation, it plays local video projects and uses SteamCMD to download Workshop videos your account can access.
+
+> **Before downloading:** The published app is **0.7.1**, for **macOS 14+ and Apple Silicon (M-series chips)**. The app interface is currently **Simplified Chinese**. Only **video wallpapers** are supported; Scene, web, and application wallpapers are outside the current scope. The app is not notarized by Apple.
+
+[Features](#features) · [Install](#install) · [Get started](#get-started) · [FAQ](#faq) · [Contribute](#contribute)
 
 ## Features
 
-- Loop videos with independent assignments per display and fill/fit modes.
-- Save the applied video frame as the system's static wallpaper on normal quit; restore video playback and saved preferences on relaunch.
-- Silent animated previews at the video's aspect ratio, with cover fallback and resource cleanup when the window is hidden, minimized, or fully occluded, during sleep, or while another management view is open.
-- Search, local renaming, favorites, groups, sorting, sequential/random playlists, and day/night switching.
-- Optional audio; only one playing display produces sound at a time.
-- Pause policies for desktop occlusion, battery power, Low Power Mode, screen lock, and sleep.
-- Per-application mute/pause/stop rules and optional launch at login.
-- Workshop links/IDs, subscription browsing, local scanning, and FFmpeg conversion while retaining source files.
+| Feature | What you can do |
+| --- | --- |
+| Multiple displays | Assign videos independently and choose fill or fit |
+| Animated previews | Preview videos silently at their original aspect ratio |
+| Personal library | Search by name or ID, rename, favorite, group, and sort |
+| Automatic switching | Configure sequential or random playlists, day/night switching, and target displays |
+| Audio controls | Mute or play audio, with sound from only one playing display at a time |
+| Playback policies | Adjust playback for desktop occlusion, battery, Low Power Mode, lock, sleep, or specific apps |
+| Workshop imports | Download by link or ID, read your subscriptions, and scan local downloads |
+| Format conversion | Use optional FFmpeg to convert unsupported videos while retaining originals |
+| Still frames on exit | Version 0.7.1 saves a static frame on normal quit and restores playback and settings on relaunch |
 
-Only video wallpapers are supported. Scene, web, and application wallpapers are outside the current scope. WallFlow is an independent application, unaffiliated with Valve, Steam, or Wallpaper Engine.
+Source builds may differ from the published download; check the [changelog](CHANGELOG.md). Not every hardware, codec, or display configuration has been validated. See [known issues](docs/KNOWN_ISSUES.md).
 
 ## Install
 
-1. Download `WallFlow-0.7.1-macOS-arm64.zip` from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest).
-2. Extract the ZIP and move `WallFlow.app` to Applications.
-3. The app is **ad-hoc signed and not notarized**. If macOS blocks it, follow [Apple's instructions](https://support.apple.com/en-us/102445): after trying to open the app, use **System Settings → Privacy & Security → Open Anyway** to confirm an exception for this app.
-4. Under **创意工坊** (Workshop), select **导入壁纸文件夹** (Import wallpaper folder) and choose a complete folder containing `project.json` and its video.
-5. Choose **应用到** (Display), **画面显示** (Fill/Fit), and **声音** (Audio), then apply the wallpaper.
+1. Open [Releases](https://github.com/luoshuang148/wallflow/releases/latest) and download `WallFlow-0.7.1-macOS-arm64.zip`.
+2. Extract the ZIP, move `WallFlow.app` to **Applications**, and open it.
+3. If macOS blocks the app, try opening it first, then use **System Settings → Privacy & Security → Open Anyway**. Follow [Apple's official instructions](https://support.apple.com/en-us/102445) to approve an exception for this app.
 
-The release includes no wallpapers, SteamCMD, or FFmpeg. Verify the ZIP by placing it beside the release's `SHA256SUMS.txt` and running:
+The download is ad-hoc signed, without Developer ID signing or Apple notarization. There is no prebuilt Intel download, and Intel hardware has not been fully tested. Wallpapers, SteamCMD, and FFmpeg are not bundled.
+
+<details>
+<summary>Verify your download and update an existing installation</summary>
+
+Place the release's `SHA256SUMS.txt` beside the ZIP and run:
 
 ```bash
 shasum -a 256 -c SHA256SUMS.txt
 ```
 
-To update, quit the previous version normally from the menu bar before replacing the app. Keep your media files and application data in place.
+Quit the old app normally from the menu bar before replacing it. Keep original videos and local data. [Installation and uninstall details](docs/USER_GUIDE.en.md)
 
-## Optional tools
+</details>
 
-Playable MP4 files work without additional tools. For other formats, install FFmpeg (`brew install ffmpeg`), or place an executable at `MediaTools/ffmpeg` beside the app. WallFlow also checks `/opt/homebrew/bin/ffmpeg` and `/usr/local/bin/ffmpeg`. Conversion uses H.264/MP4 with an optional AAC track; it may reduce quality and uses cache space.
+## Get started
 
-Workshop downloads require [Valve's SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) and a Steam account with access to the Wallpaper Engine content. Select the SteamCMD executable in the Workshop screen or use this layout:
+1. Prepare a complete video wallpaper folder containing `project.json` and its video.
+2. In version 0.7.1, choose **创意工坊 → 导入壁纸文件夹** (Workshop → Import wallpaper folder).
+3. Select the wallpaper, choose **应用到** (Display), **画面显示** (Fill/Fit), and **声音** (Audio), then apply it.
 
-```text
-Applications/
-├── WallFlow.app
-└── SteamTools/
-    └── MacOS/
-        └── steamcmd
-```
+Natively playable MP4 video projects need no additional tools. **Local imports do not require a Steam account or a Wallpaper Engine purchase.** Workshop downloads require [Valve's SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) and a Steam account that owns Wallpaper Engine and can access the item. Other video formats may require FFmpeg.
 
-The macOS SteamCMD tool may require Rosetta on Apple Silicon. Steam's web session and SteamCMD's download session are separate logins. Subscription browsing does not subscribe/unsubscribe or delete local wallpapers.
+WallFlow references original media in place, so keep imported folders available. Removing a library entry does not delete source files, and renaming does not modify the source `project.json`.
 
-## Build and test
+The [user guide](docs/USER_GUIDE.en.md) covers tool setup, playlists, power policies, login startup, and local data.
+
+## FAQ
+
+**Does it support every Wallpaper Engine wallpaper?** Only video projects. Scene, web, and application projects are not supported.
+
+**Why does playback continue after closing the window?** Closing the window hides management. In 0.7.1, menu-bar Quit stops playback and saves a still frame.
+
+**Does quitting update every Space?** Only the current Space on each display. Force-quitting cannot save exit frames.
+
+**Why does downloading ask me to log in again?** Steam's webpage and SteamCMD use separate sessions.
+
+**Having trouble installing, playing, or converting?** Check the [user guide](docs/USER_GUIDE.en.md#troubleshooting) and [known issues](docs/KNOWN_ISSUES.md), then submit reproduction steps using the [issue forms](https://github.com/luoshuang148/wallflow/issues/new/choose). [Get help](SUPPORT.md)
+
+## Build from source
 
 Use a Swift 6-capable Xcode toolchain on macOS 14+:
 
@@ -64,26 +97,22 @@ git clone https://github.com/luoshuang148/wallflow.git
 cd wallflow
 ./build.sh
 open dist/WallFlow.app
-swift test
 ```
 
-`WALLFLOW_BUILD_DIR` and `WALLFLOW_APP_DIR` override the build cache and app output paths. The build script ad-hoc signs in a temporary directory before copying the app to its destination.
+See the [development guide](docs/DEVELOPMENT.md) for the code map, test commands, optional integrations, and build options. CI runs default tests, builds the app, and verifies signing. Tests needing personal media, Steam accounts, or a graphical session may be skipped.
 
-Default tests skip cases requiring personal media, tools, or account sessions. See the [Chinese README's test variables](README.md#测试) and [development guide](docs/DEVELOPMENT.md) for integration testing. CI runs default tests and builds the app on macOS; a green result does not validate skipped integrations or all hardware combinations.
+## Contribute
 
-## Data and limitations
+Everyone is welcome to participate in Chinese or English, including without writing code:
 
-Settings remain in `~/Library/Application Support/VideoWallpaper/` for compatibility:
+- [Report a bug](https://github.com/luoshuang148/wallflow/issues/new?template=bug_report.yml) with your version, device details, and reproduction steps.
+- [Suggest a feature](https://github.com/luoshuang148/wallflow/issues/new?template=feature_request.yml) by describing a real use case and desired behavior.
+- Improve documentation, translate guides, or submit a focused Pull Request. Read the [contributing guide](CONTRIBUTING.md) first.
 
-- `state.json`: library, assignments, names, playback preferences, and automation.
-- `workshop.json`: download account name and tool paths.
-- `ConvertedVideos/`: converted media cache; retain files still in use.
-- `ExitWallpapers/`: installed static frames; older frames may still be referenced by other Spaces.
+Report vulnerabilities through [private vulnerability reporting](https://github.com/luoshuang148/wallflow/security/advisories/new); see the [security policy](SECURITY.md). Remove accounts, personal paths, and session data from screenshots and logs.
 
-Closing the management window keeps wallpapers playing. Normal quit saves stills for each display's **current Space only**. Force-quitting cannot save them. Relaunch restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
+## Licensing and third-party content
 
-See [known issues](docs/KNOWN_ISSUES.md), [contribution guidelines](CONTRIBUTING.md), and the [security policy](SECURITY.md). Third-party tools and wallpaper assets retain their own licenses and author permissions.
+**This repository does not yet include an open-source license; the author has not selected one.**
 
-## License
-
-The repository does not yet include a license. The project author has not selected one.
+WallFlow is independent and unaffiliated with Valve, Steam, or Wallpaper Engine. Third-party tools and wallpapers retain their own licenses and author permissions. Only import or share content you are entitled to use.

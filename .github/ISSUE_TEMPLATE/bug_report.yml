@@ -4,11 +4,17 @@ title: "[Bug]: "
 body:
   - type: markdown
     attributes:
-      value: 请先查看已知问题。不要上传 Steam 凭据、会话文件、完整状态文件或无权分享的壁纸；日志与截图请脱敏。安全漏洞请按 SECURITY.md 私下报告。
+      value: |
+        欢迎中文或英文。请先搜索现有 Issue，并查看[已知问题](https://github.com/luoshuang148/wallflow/blob/main/docs/KNOWN_ISSUES.md)。
+        Chinese and English are welcome. Search existing issues and check the known issues first.
+        不要上传 Steam 凭据、会话文件、完整状态文件或无权分享的壁纸；请脱敏截图与日志。
+        Never attach credentials, session files, full state files, or unauthorized wallpapers. Sanitize screenshots and logs.
+        安全漏洞请[私下报告 / Report vulnerabilities privately](https://github.com/luoshuang148/wallflow/security/advisories/new)。
   - type: input
     id: version
     attributes:
       label: WallFlow 版本 / Version
+      description: 在应用中查看版本；源码构建请附提交编号。 / Include the build number or source commit if available.
       placeholder: 0.7.1 (build 16)
     validations:
       required: true
@@ -16,24 +22,29 @@ body:
     id: environment
     attributes:
       label: 系统、芯片和显示器 / macOS, chip, displays
-      placeholder: macOS 版本，M 系列或 Intel，显示器数量
+      placeholder: macOS 14.x, Apple M2, 2 displays
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: 复现步骤 / Steps to reproduce
-      placeholder: 从打开应用开始，描述触发问题的操作。
+      description: 从打开应用开始，描述触发问题的操作。 / Describe the actions from launching the app to the problem.
+      placeholder: |
+        1.
+        2.
+        3.
     validations:
       required: true
   - type: textarea
     id: behavior
     attributes:
       label: 预期与实际结果 / Expected and actual behavior
+      description: 说明你希望发生什么，以及实际发生了什么。 / Explain what you expected and what happened instead.
     validations:
       required: true
   - type: textarea
     id: context
     attributes:
       label: 媒体、工具和脱敏日志 / Media, tools, sanitized logs
-      description: 如相关，请注明视频格式/编码、声音设置、FFmpeg/SteamCMD 版本和最小样本。不要粘贴账号或会话数据。
+      description: 如相关，请附视频格式/编码、声音设置、工具版本和最小样本；不要包含账号或会话。 / If relevant, include codec, audio settings, tool versions, and a permitted minimal sample, without accounts or session data.
