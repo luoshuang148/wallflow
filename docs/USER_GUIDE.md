@@ -1,0 +1,97 @@
+# WallFlow 使用指南
+
+[返回首页](../README.md) · [English](USER_GUIDE.en.md)
+
+本指南的安装与操作入口对应公开发布的 **0.7.1**。源码构建的新增行为请同时查阅[更新日志](../CHANGELOG.md)。
+
+## 下载安装
+
+1. 从 [最新 Release](https://github.com/luoshuang148/wallflow/releases/latest) 下载 `WallFlow-0.7.1-macOS-arm64.zip`，适用于 macOS 14+ 的 Apple Silicon Mac。
+2. 解压后将 `WallFlow.app` 拖入“应用程序”，再打开应用。
+3. 若 macOS 阻止打开，请按 [Apple 的说明](https://support.apple.com/zh-cn/102445)，在尝试打开后到 **系统设置 → 隐私与安全性 → 仍要打开** 为该应用确认例外。
+4. 导入自己的完整视频壁纸文件夹即可使用；下载创意工坊作品或转换视频时，再配置下方的可选工具。
+
+发布包使用本地 ad-hoc 签名，**尚无 Developer ID 签名和 Apple 公证**。Intel Mac 暂无预编译下载，源码构建也尚未在 Intel 真机完整验证。发布包不包含壁纸、SteamCMD 或 FFmpeg。
+
+Release 附带 `SHA256SUMS.txt`。把它和 ZIP 放在同一目录，可核对下载完整性：
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+更新时先从菜单栏正常退出旧版，再替换应用。保留原媒体文件和本地数据目录，已有壁纸库、屏幕分配和声音偏好会继续使用。
+
+## 使用
+
+1. 在 **创意工坊 → 导入壁纸文件夹** 选择包含 `project.json` 和视频的完整文件夹。
+2. 选中壁纸，设置 **应用到**、**画面显示** 和 **声音**，点击应用。声音选项即时生效并保存。
+3. 右键壁纸或点击标题旁的铅笔可改名；星标可收藏。
+4. **设置 → 壁纸库与自动播放** 管理分组、轮播、应用规则和登录启动。
+5. **设置 → 性能与电源** 管理自动暂停策略。
+
+关闭窗口后继续播放，通过菜单栏图标打开管理窗口或退出。应用引用原视频文件；从库中移除记录不会删除原文件。自定义名称保存在本机，不修改源 `project.json`。
+
+正常退出会把当前视频帧保存为 macOS 静态壁纸，沿用各屏幕的画面显示设置；应用规则已释放播放器时使用已应用视频的首帧。退出后不再播放视频或声音，重新启动恢复保存的屏幕分配、声音和暂停设置。强制结束进程无法执行退出保存。macOS 的公开接口只更新各屏幕当前所在的桌面空间（Space），其他桌面空间的系统壁纸保持原状。
+
+轮播和登录启动默认关闭，应用规则默认为空。登录启动使用 macOS 登录项服务，可能需要把应用放入“应用程序”文件夹并在系统设置中批准。
+
+## 可选工具
+
+### FFmpeg
+
+原生可播放的 MP4 不依赖 FFmpeg。其他格式会转换为 H.264/MP4 与可选 AAC 音轨；重新编码可能有画质损失，并占用缓存空间。
+
+支持在应用旁放置 `MediaTools/ffmpeg`，或使用 Homebrew 安装：
+
+```bash
+brew install ffmpeg
+```
+
+也会查找 `/opt/homebrew/bin/ffmpeg` 和 `/usr/local/bin/ffmpeg`。仓库不包含 FFmpeg 或转换缓存。
+
+### SteamCMD
+
+创意工坊下载需要 [Valve 官方 SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) 和拥有 Wallpaper Engine 的 Steam 账号。仓库不包含 SteamCMD、Steam 登录数据或壁纸资源。
+
+可在创意工坊页面选择 `steamcmd`，或使用以下目录结构：
+
+```text
+dist/
+├── WallFlow.app
+└── SteamTools/
+    └── MacOS/
+        └── steamcmd
+```
+
+Mac 版 SteamCMD 为 Intel 程序，Apple Silicon 上可能需要 Rosetta。工具在独立目录中更新，不写入应用签名包。
+
+在创意工坊页面填写下载账号并登录；支持粘贴作品链接或编号下载，或读取自己的订阅列表后选择视频批量导入。Steam 网页与 SteamCMD 是独立登录会话。订阅同步不会订阅、取消订阅或删除本地壁纸。
+
+## 本地数据
+
+设置位于 `~/Library/Application Support/VideoWallpaper/`：
+
+- `state.json`：壁纸库、屏幕分配、名称、播放和自动化设置。
+- `workshop.json`：普通下载账号名和工具路径。
+- `ConvertedVideos/`：转换视频缓存，正在使用时需保留。
+- `ExitWallpapers/`：退出后交给 macOS 显示的静态画面。历史图片可能仍被其他桌面空间引用，因此会保留；可手动清理确定不再使用的图片。
+
+网页登录会话由 WebKit 管理，下载登录由 SteamCMD 管理。应用不提取或复制密码、Cookie 和登录令牌到源码仓库。
+
+`.gitignore` 排除了构建产物、视频、工具目录、本机设置、Steam 会话、日志及常见凭据文件。
+
+## 常见问题
+
+- **为什么没有 Scene 壁纸？** 当前只实现视频壁纸，不解析 Wallpaper Engine 的 Scene、网页或程序项目，也不承诺兼容全部视频编码。
+- **关闭窗口后为什么仍在播放？** 关闭窗口只收起管理界面；通过菜单栏退出会停止播放，并将当前画面保存为静态壁纸。
+- **退出后所有 Space 都会更新吗？** 只更新每块屏幕当前所在的 Space。强制结束应用不会执行保存；重开应用恢复设置，不保证从退出的准确时间点续播。
+- **网页已登录，为什么下载还要求登录？** Steam 网页和 SteamCMD 使用独立会话；创意工坊下载需要有权限访问作品的账号。
+- **转换为什么失败？** 检查 FFmpeg 是否安装、源文件是否仍可读取，以及缓存目录剩余空间。原生可播放的 MP4 无需转换。
+
+其他验证边界见 [已知问题](KNOWN_ISSUES.md)。
+
+## 卸载
+
+先从菜单栏正常退出 WallFlow，再将应用移到废纸篓。登录启动开启时，请先在设置中关闭。
+
+应用的本地设置不会随着删除应用而自动移除。确认不再需要后，可在 Finder 的“前往文件夹”中打开 `~/Library/Application Support/VideoWallpaper/`，手动移除设置与缓存；这不会删除原始视频。`ExitWallpapers/` 中的图片可能仍被 macOS 的其他 Space 使用，请先更换系统壁纸再清理。
