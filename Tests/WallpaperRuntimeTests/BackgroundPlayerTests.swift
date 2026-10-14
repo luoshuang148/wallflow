@@ -34,6 +34,34 @@ import Darwin
         try paths.requestStop(session: current)
         XCTAssertTrue(try paths.stopRequested(session: current))
     }
+    func testMenuQuitAcceptsCurrentPlayerWithoutStoppingPlaybackEvenDuringStartup() throws {
+        let paths = try paths(), lease = try XCTUnwrap(PlayerLease.acquire(paths))
+        defer { lease.release() }
+        let controller = BackgroundPlayerController(paths: paths, build: "test", parentAppPath: "/tmp/WallFlow.app", timeout: 1) { XCTFail("Quit must not launch a player") }
+        for phase in [PlayerPhase.starting, .ready] {
+            let current = try status(paths, phase: phase)
+            let request = Notification(name: BackgroundPlayerPaths.managementQuitNotification, object: paths.stateURL.path,
+                                       userInfo: ["session": current.sessionID.uuidString])
+            XCTAssertTrue(try controller.isManagementQuitRequest(request))
+            XCTAssertTrue(try paths.hasOwner())
+            XCTAssertFalse(try paths.stopRequested(session: current.sessionID))
+            XCTAssertEqual(try paths.readStatus()?.phase, phase)
+        }
+    }
+    func testMenuQuitRejectsOtherLibraryStaleSessionAndStoppingPlayer() throws {
+        let paths = try paths(), lease = try XCTUnwrap(PlayerLease.acquire(paths))
+        defer { lease.release() }
+        let current = try status(paths)
+        let controller = BackgroundPlayerController(paths: paths, build: "test", timeout: 1) { }
+        let otherLibrary = Notification(name: BackgroundPlayerPaths.managementQuitNotification, object: "/other/state.json", userInfo: ["session": current.sessionID.uuidString])
+        let staleSession = Notification(name: BackgroundPlayerPaths.managementQuitNotification, object: paths.stateURL.path, userInfo: ["session": UUID().uuidString])
+        XCTAssertFalse(try controller.isManagementQuitRequest(otherLibrary))
+        XCTAssertFalse(try controller.isManagementQuitRequest(staleSession))
+        _ = try status(paths, phase: .stopping)
+        let stopping = Notification(name: BackgroundPlayerPaths.managementQuitNotification, object: paths.stateURL.path, userInfo: ["session": current.sessionID.uuidString])
+        XCTAssertFalse(try controller.isManagementQuitRequest(stopping))
+        XCTAssertFalse(try paths.stopRequested(session: current.sessionID))
+    }
     func testFreshStatusFromAnotherSessionCannotPretendToOwnLease() async throws {
         let paths = try paths(), lease = try XCTUnwrap(PlayerLease.acquire(paths))
         defer { lease.release() }

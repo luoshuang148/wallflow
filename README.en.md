@@ -8,12 +8,12 @@
 
 A native macOS video wallpaper app built with SwiftUI, AppKit, and AVFoundation. Import complete Wallpaper Engine **video** wallpaper folders, download Workshop videos with SteamCMD, or browse your account's subscribed videos. The application interface is currently in Simplified Chinese.
 
-Current development version: **0.9.0 (build 19)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
+Current development version: **0.9.1 (build 20)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
 
 ## Features
 
 - Loop videos with independent assignments per display and fill/fit modes.
-- Command-Q quits management while an independent background player continues. Settings and the menu bar offer “停止壁纸并完全退出” (Stop wallpaper and completely quit), saving a static frame.
+- Menu-bar Quit and Command-Q quit management while an independent background player continues. Settings offers “停止壁纸并完全退出” (Stop wallpaper and completely quit), saving a static frame.
 - Silent animated previews at the video's aspect ratio, with cover fallback and resource cleanup when the window is hidden, minimized, or fully occluded, during sleep, or while another management view is open.
 - Search, local renaming, favorites, groups, sorting, sequential/random playlists, and day/night switching.
 - Optional audio; only one playing display produces sound at a time.
@@ -86,7 +86,7 @@ Settings remain in `~/Library/Application Support/VideoWallpaper/` for compatibi
 - `Runtime/`: the singleton lease, current-session status, and shutdown request; no account credentials.
 - `ExitWallpapers/`: installed static frames; older frames may still be referenced by other Spaces.
 
-Closing the management window or pressing Command-Q keeps wallpapers, audio, playlists and pause policies running in the independent `WallFlowPlayer`. Reopening management connects to the same player without resetting playback. Use the complete-exit action in Settings or the menu bar to stop both processes and save stills for each display's **current Space only**. Force-quitting the player cannot save them. Relaunch after a complete exit restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
+Closing the management window, selecting menu-bar Quit, or pressing Command-Q keeps wallpapers, audio, playlists and pause policies running in the independent `WallFlowPlayer`. Reopening management connects to the same player without resetting playback. Use the complete-exit action in Settings to stop both processes and save stills for each display's **current Space only**. Force-quitting the player cannot save them. Relaunch after a complete exit restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
 
 macOS may ask for access to protected folders containing imported wallpapers, including Downloads and Documents. Local ad-hoc re-signing may trigger a new prompt. The user controls this access; denied files cannot be restored for playback.
 

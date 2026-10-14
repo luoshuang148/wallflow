@@ -43,6 +43,7 @@ public struct BackgroundPlayerPaths {
     public static let commandNotification = Notification.Name("local.zongzihao.WallFlow.playerCommand")
     public static let stoppedNotification = Notification.Name("local.zongzihao.WallFlow.playerStopped")
     public static let stoppingNotification = Notification.Name("local.zongzihao.WallFlow.playerStopping")
+    public static let managementQuitNotification = Notification.Name("local.zongzihao.WallFlow.managementQuit")
     public init(stateURL: URL) { self.stateURL = stateURL }
     func prepareDirectory() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
@@ -152,6 +153,15 @@ public final class PlayerLease {
         status = try activeStatus()
         if let status { try checkCompatibility(status); lastVerifiedStatus = status }
     }
+    public func isManagementQuitRequest(_ notification: Notification) throws -> Bool {
+        guard notification.name == BackgroundPlayerPaths.managementQuitNotification,
+              notification.object as? String == paths.stateURL.path,
+              let session = (notification.userInfo?["session"] as? String).flatMap(UUID.init(uuidString:)),
+              let current = try activeStatus(), current.sessionID == session,
+              current.phase == .starting || current.phase == .ready else { return false }
+        try checkCompatibility(current)
+        return true
+    }
     public func ensureRunning() async throws {
         status = nil
         if !(try paths.hasOwner()) { try await launch() }
@@ -177,7 +187,7 @@ public final class PlayerLease {
         // A stopped notification arrives before process disappearance; keep the last verified identity.
         guard let current = active ?? (owned ? nil : lastVerifiedStatus) else {
             if !owned && expectedSession == nil { status = nil; return }
-            throw WallpaperError.message("后台播放器仍在运行或无法确认退出状态。请从 WallFlow 菜单栏完全退出。")
+            throw WallpaperError.message("后台播放器仍在运行或无法确认退出状态。请从菜单栏打开管理程序，在设置中重试完全退出。")
         }
         if let expectedSession, current.sessionID != expectedSession {
             throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")

@@ -133,4 +133,8 @@ import WallpaperCore
             catch { model.errorMessage = "无法打开管理程序：\(error.localizedDescription)" }
         }
     }
+    public func quitManagement() {
+        DistributedNotificationCenter.default().postNotificationName(BackgroundPlayerPaths.managementQuitNotification,
+            object: paths.stateURL.path, userInfo: ["session": sessionID.uuidString], deliverImmediately: true)
+    }
 }

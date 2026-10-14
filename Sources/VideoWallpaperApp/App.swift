@@ -69,7 +69,7 @@ import WallpaperRuntime
     private func setupMainMenu() {
         let menu = NSMenu()
         let appItem = NSMenuItem(), appMenu = NSMenu()
-        let quit = NSMenuItem(title: "退出管理程序（壁纸继续播放）", action: #selector(quit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "退出 WallFlow（壁纸继续播放）", action: #selector(quit), keyEquivalent: "q")
         quit.target = self; appMenu.addItem(quit); appItem.submenu = appMenu; menu.addItem(appItem)
         let editItem = NSMenuItem(title: "编辑", action: nil, keyEquivalent: ""), edit = NSMenu(title: "编辑")
         for (title, action, key) in [("剪切", "cut:", "x"), ("复制", "copy:", "c"), ("粘贴", "paste:", "v"), ("全选", "selectAll:", "a")] {
@@ -93,6 +93,14 @@ import WallpaperRuntime
         observe(DistributedNotificationCenter.default(), Notification.Name(SharedStateStore.notification), object: model.storeURL.path) { $0.requestRefresh() }
         observePlayerExit(BackgroundPlayerPaths.stoppingNotification) { $0.quiesce() }
         let center = DistributedNotificationCenter.default()
+        let quitManagement = center.addObserver(forName: BackgroundPlayerPaths.managementQuitNotification, object: model.storeURL.path, queue: .main) { [weak self] notification in
+            Task { @MainActor in
+                guard let self, !self.terminationStarted else { return }
+                do { if try self.player.isManagementQuitRequest(notification) { self.quit() } }
+                catch { self.model.errorMessage = error.localizedDescription }
+            }
+        }
+        observers.append((center, quitManagement))
         let stopped = center.addObserver(forName: BackgroundPlayerPaths.stoppedNotification, object: model.storeURL.path, queue: .main) { [weak self] notification in
             let session = (notification.userInfo?["session"] as? String).flatMap(UUID.init(uuidString:))
             Task { @MainActor in

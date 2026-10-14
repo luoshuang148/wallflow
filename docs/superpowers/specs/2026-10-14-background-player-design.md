@@ -6,7 +6,7 @@ The user explicitly wants Command-Q to exit the management program while wallpap
 
 - Main window Close hides management; Command-Q terminates the manager process and its previews/download work, while the background process and its current desktop players continue uninterrupted.
 - The background process owns the existing menu-bar entry. “管理壁纸…” launches/raises the manager. Pause/resume remains usable without the manager.
-- Settings provides “停止壁纸并完全退出”. This stops pending playback/playlist operations, captures the currently applied frames using existing static-wallpaper behavior, ends the background process, then terminates the manager. A matching menu-bar complete-exit item is available when only the background process remains.
+- Settings provides “停止壁纸并完全退出”. This stops pending playback/playlist operations, captures the currently applied frames using existing static-wallpaper behavior, ends the background process, then terminates the manager. The ordinary menu-bar Quit action also exits only management; reopen management from the menu bar to reach Settings for complete exit. (User clarification on 2026-10-14.)
 - Reopening management connects to the existing player, preserves playback positions and audio ownership, and does not create duplicate desktop windows or a second menu-bar icon.
 - Existing assignments, audio, manual pause, playlist, power/app rules, media references, Steam sessions, concise Chinese UI, and approved icon remain compatible. Full quit keeps the existing Space/static-frame limitations.
 - Login startup remains the existing opt-in `SMAppService.mainApp` registration; do not silently enable or change the user's login registration. Launching the manager starts/reuses the helper.
