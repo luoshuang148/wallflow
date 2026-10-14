@@ -115,6 +115,7 @@ public final class PlayerLease {
     @Published public private(set) var status: PlayerStatus?
     @Published public private(set) var isStopping = false
     public let paths: BackgroundPlayerPaths
+    private var lastVerifiedStatus: PlayerStatus?
     private let build: String
     private let parentAppPath: String?
     private let timeout: TimeInterval
@@ -149,7 +150,7 @@ public final class PlayerLease {
     }
     public func refreshStatus() throws {
         status = try activeStatus()
-        if let status { try checkCompatibility(status) }
+        if let status { try checkCompatibility(status); lastVerifiedStatus = status }
     }
     public func ensureRunning() async throws {
         status = nil
@@ -159,7 +160,7 @@ public final class PlayerLease {
             try Task.checkCancellation()
             if let value = try activeStatus() {
                 try checkCompatibility(value)
-                status = value
+                status = value; lastVerifiedStatus = value
                 if value.phase == .ready { return }
                 if value.phase == .stopping { throw WallpaperError.message("后台播放器正在退出，请稍后重新打开。") }
             }
@@ -167,20 +168,33 @@ public final class PlayerLease {
         } while Date() < deadline
         throw WallpaperError.message("后台播放器启动超时，请重新打开 WallFlow 或检查后台进程。")
     }
-    public func stopAndWait() async throws {
+    public func stopAndWait(expectedSession: UUID? = nil) async throws {
         guard !isStopping else { throw WallpaperError.message("正在等待后台播放器退出。") }
         isStopping = true
         defer { isStopping = false }
-        guard try paths.hasOwner() else { status = nil; return }
+        let owned = try paths.hasOwner()
+        let active = owned ? try activeStatus() : nil
+        // A stopped notification arrives before process disappearance; keep the last verified identity.
+        guard let current = active ?? (owned ? nil : lastVerifiedStatus) else {
+            if !owned && expectedSession == nil { status = nil; return }
+            throw WallpaperError.message("后台播放器仍在运行或无法确认退出状态。请从 WallFlow 菜单栏完全退出。")
+        }
+        if let expectedSession, current.sessionID != expectedSession {
+            throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
+        }
+        status = current; lastVerifiedStatus = current
         // Complete exit must also be able to stop an older build before an update.
-        guard let current = try activeStatus() else { throw WallpaperError.message("后台播放器仍在运行，但无法读取其状态。请从 WallFlow 菜单栏完全退出。") }
-        try paths.requestStop(session: current.sessionID)
+        if owned { try paths.requestStop(session: current.sessionID) }
         let deadline = Date().addingTimeInterval(timeout)
         repeat {
-            if !(try paths.hasOwner()) && !isProcessRunning(current.pid) { status = nil; return }
+            let ownedNow = try paths.hasOwner()
+            if ownedNow, let owner = try paths.readOwnership(), owner.sessionID != current.sessionID {
+                throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
+            }
             if let other = try paths.readStatus(), other.sessionID != current.sessionID {
                 throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
             }
+            if !ownedNow && !isProcessRunning(current.pid) { status = nil; return }
             try await Task.sleep(for: .milliseconds(50))
         } while Date() < deadline
         throw WallpaperError.message("后台播放器仍在运行；请处理壁纸保留提示后，再重试完全退出。")

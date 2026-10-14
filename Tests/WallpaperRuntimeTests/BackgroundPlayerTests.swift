@@ -98,4 +98,22 @@ import Darwin
         catch { XCTAssertTrue(error.localizedDescription.contains("仍在运行")) }
         try await release.value
     }
+    func testStoppedNotificationWaitsForOldPIDAndRejectsNewOwner() async throws {
+        let paths = try paths(), oldLease = try XCTUnwrap(PlayerLease.acquire(paths))
+        let old = try status(paths)
+        let controller = BackgroundPlayerController(paths: paths, build: "test", timeout: 0.15) { }
+        try await controller.ensureRunning()
+        oldLease.release()
+        try controller.refreshStatus()
+        XCTAssertNil(controller.status)
+        let began = Date()
+        do { try await controller.stopAndWait(expectedSession: old.sessionID); XCTFail("Old PID is still alive") }
+        catch { XCTAssertTrue(error.localizedDescription.contains("仍在运行")) }
+        XCTAssertGreaterThan(Date().timeIntervalSince(began), 0.1, "Released ownership must still wait for the live PID")
+        let newLease = try XCTUnwrap(PlayerLease.acquire(paths)); defer { newLease.release() }
+        let newer = try status(paths)
+        do { try await controller.stopAndWait(expectedSession: old.sessionID); XCTFail("Do not close management or stop a new owner") }
+        catch { XCTAssertTrue(error.localizedDescription.contains("重新启动")) }
+        XCTAssertFalse(try paths.stopRequested(session: newer.sessionID))
+    }
 }

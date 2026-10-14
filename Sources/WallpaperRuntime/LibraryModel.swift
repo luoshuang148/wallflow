@@ -29,6 +29,7 @@ public enum LibraryMode { case standalone, management, player }
     private var onBattery = false
     private var lowPowerMode = false
     private var terminating = false
+    private var pendingReloadBaseline: AppState?
 
     public init(storeURL: URL, mode: LibraryMode = .standalone) {
         self.storeURL = storeURL
@@ -189,9 +190,13 @@ public enum LibraryMode { case standalone, management, player }
             if let target { next.assignments[target] = assignment }
             else { next.applyToAll(assignment,displays:displays.map(\.id)) }
             try commit(next, fromPlaylist: fromPlaylist)
-            try engine.commit(change, shouldPlay: intent.shouldPlay, isMuted: effectiveMuted)
             readyProjects.insert(projectID)
             mediaInfo[projectID] = info
+            if applicationEffects.stopped { engine.stop() }
+            else if state.assignments != next.assignments || state.defaultAssignment != next.defaultAssignment {
+                // The prepared change used an older independent display choice. Prepare from the merged state.
+                await restore(revalidate: false)
+            } else { try engine.commit(change, shouldPlay: intent.shouldPlay, isMuted: effectiveMuted) }
             if !fromPlaylist { playlistClock.noteManualChoice(projectID,settings:state.playlist,now:Date()) }
             errorMessage = nil
             return true
@@ -363,21 +368,29 @@ public enum LibraryMode { case standalone, management, player }
         if mode == .standalone {
             try StateStore.save(next, to: storeURL); state = next
         } else {
-            state = try SharedStateStore.saveChanges(base: state, next: next, to: storeURL) { current in
+            let merged = try SharedStateStore.saveChanges(base: state, next: next, to: storeURL) { current in
                 if fromPlaylist && (current.playlist != self.state.playlist || current.manuallyPaused ||
                     current.applicationRules != self.state.applicationRules || current.performance != self.state.performance) {
                     throw CancellationError()
                 }
             }
+            if merged != next { pendingReloadBaseline = pendingReloadBaseline ?? next }
+            state = merged
         }
         intent.manuallyPaused = state.manuallyPaused
+        if mode != .standalone {
+            engine.setOcclusionPolicy(state.performance.pauseWhenOccluded)
+            updatePowerState(onBattery: onBattery, lowPowerMode: lowPowerMode)
+            refreshApplicationEffects()
+        }
     }
     public func reloadSharedState() async {
         guard !terminating else { return }
         do {
             let fresh = try StateStore.load(from: storeURL)
-            guard fresh != state else { return }
-            let old = state
+            let old = pendingReloadBaseline ?? state
+            pendingReloadBaseline = nil
+            guard fresh != old else { return }
             state = fresh
             intent.manuallyPaused = fresh.manuallyPaused
             if old.playlist != fresh.playlist { playlistClock.reset() }
@@ -391,7 +404,8 @@ public enum LibraryMode { case standalone, management, player }
             engine.setOcclusionPolicy(fresh.performance.pauseWhenOccluded)
             updatePowerState(onBattery: onBattery, lowPowerMode: lowPowerMode)
             refreshApplicationEffects()
-            if old.projects != fresh.projects || old.assignments != fresh.assignments || old.defaultAssignment != fresh.defaultAssignment {
+            let assignmentChanged = old.assignments != fresh.assignments || old.defaultAssignment != fresh.defaultAssignment
+            if old.projects != fresh.projects || (mode != .management && assignmentChanged) {
                 await restore(revalidate: false)
             } else { applyRuntimePolicy() }
         } catch { errorMessage = error.localizedDescription }

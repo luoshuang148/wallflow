@@ -63,4 +63,51 @@ import AppKit
         XCTAssertEqual(session.player.rate, 0)
         XCTAssertTrue(player.state.manuallyPaused)
     }
+    func testHelperMenuEditCannotAbsorbExternalStopRuleWithoutApplyingIt() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("state.json"), base = AppState()
+        try StateStore.save(base, to: url)
+        let player = LibraryModel(storeURL: url, mode: .player)
+        player.updateApplications(running: ["test.stop"], frontmost: "test.stop")
+        var newer = base
+        newer.applicationRules = [ApplicationRule(bundleID: "test.stop", name: "Test", action: .stop)]
+        _ = try SharedStateStore.saveChanges(base: base, next: newer, to: url)
+        player.togglePause(); player.togglePause()
+        await player.reloadSharedState()
+        XCTAssertTrue(player.applicationEffects.stopped)
+    }
+    func testMergedExternalAssignmentStillUpdatesInstalledFitOnReload() async throws {
+        let (root, project) = try fixture(); defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("state.json")
+        var base = AppState(); base.projects = [project]; base.defaultAssignment = Assignment(projectID: project.id)
+        base.performance.pauseWhenOccluded = false; base.isMuted = true
+        try StateStore.save(base, to: url)
+        let player = LibraryModel(storeURL: url, mode: .player); defer { player.engine.stop() }
+        await player.restore()
+        var newer = base; newer.defaultAssignment?.fit = .fit
+        _ = try SharedStateStore.saveChanges(base: base, next: newer, to: url)
+        player.togglePause()
+        await player.reloadSharedState()
+        XCTAssertEqual(player.engine.sessions.values.first?.fit, .fit)
+        XCTAssertEqual(player.engine.sessions.values.first?.player.rate, 0)
+    }
+    func testManagementAssignmentRefreshDoesNotCancelUnrelatedImport() async throws {
+        let (root, project) = try fixture(), (importRoot, importedProject) = try fixture()
+        defer { try? FileManager.default.removeItem(at: root); try? FileManager.default.removeItem(at: importRoot) }
+        let url = root.appendingPathComponent("state.json")
+        var base = AppState(); base.projects = [project]; base.defaultAssignment = Assignment(projectID: project.id)
+        try StateStore.save(base, to: url)
+        let manager = LibraryModel(storeURL: url, mode: .management)
+        await manager.restore()
+        let importing = Task { await manager.importFolder(importRoot) }
+        while !manager.isBusy { await Task.yield() }
+        var newer = base; newer.defaultAssignment?.fit = .fit
+        _ = try SharedStateStore.saveChanges(base: base, next: newer, to: url)
+        await manager.reloadSharedState()
+        let result = await importing.value
+        XCTAssertEqual(result, importedProject.id)
+        XCTAssertEqual(manager.state.projects.count, 2)
+        XCTAssertEqual(manager.state.defaultAssignment?.fit, .fit)
+    }
 }

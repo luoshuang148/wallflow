@@ -17,6 +17,7 @@ import WallpaperCore
     private var refreshTask: Task<Void, Never>?
     private var needsRefresh = false
     private var lastPlaylistTick = Date.distantPast
+    private var stopScheduled = false
     public var onStopRequested: (() -> Void)?
 
     public init(paths: BackgroundPlayerPaths, parentAppURL: URL, build: String, sessionID: UUID) {
@@ -84,7 +85,14 @@ import WallpaperCore
     }
     private func checkStopRequest() {
         guard phase == .starting || phase == .ready else { return }
-        do { if try paths.stopRequested(session: sessionID) { onStopRequested?() } }
+        do {
+            if !stopScheduled, try paths.stopRequested(session: sessionID) {
+                stopScheduled = true
+                // terminateLater enters an AppKit nested event loop. A Swift MainActor
+                // task must finish first so the async static-frame export can resume.
+                DispatchQueue.main.async { [weak self] in self?.onStopRequested?() }
+            }
+        }
         catch { model.errorMessage = "无法读取退出请求：\(error.localizedDescription)" }
     }
     public func publishStatus() throws {

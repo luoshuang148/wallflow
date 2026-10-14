@@ -18,6 +18,22 @@ final class SharedStateStoreTests: XCTestCase {
     private func store() -> URL {
         FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathComponent("state.json")
     }
+    func testAssignmentFitAndProjectAreOneConcurrentChoice() throws {
+        for useDefault in [true, false] {
+            let url = store(); defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+            var base = AppState()
+            func assign(_ state: inout AppState, _ value: Assignment) {
+                if useDefault { state.defaultAssignment = value } else { state.assignments["display"] = value }
+            }
+            assign(&base, Assignment(projectID: "A", fit: .fill))
+            try StateStore.save(base, to: url)
+            var manual = base; assign(&manual, Assignment(projectID: "A", fit: .fit))
+            _ = try SharedStateStore.saveChanges(base: base, next: manual, to: url)
+            var staleRotation = base; assign(&staleRotation, Assignment(projectID: "B", fit: .fill))
+            XCTAssertThrowsError(try SharedStateStore.saveChanges(base: base, next: staleRotation, to: url))
+            XCTAssertEqual(try StateStore.load(from: url), manual)
+        }
+    }
     func testIndependentSettingsAndAssignmentsSurviveStaleWriter() throws {
         let url = store(); defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let base = AppState(); try StateStore.save(base, to: url)
