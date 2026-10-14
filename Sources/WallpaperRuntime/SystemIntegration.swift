@@ -17,17 +17,20 @@ import ServiceManagement
     func openSettings() { SMAppService.openSystemSettingsLoginItems() }
 }
 
-/// Login startup follows the system's current status, without a separate saved preference.
+/// The default is applied once; current enabled/approval state always comes from macOS.
 @MainActor public final class LoginStartupModel: ObservableObject {
     @Published public private(set) var enabled = false
     @Published public private(set) var needsApproval = false
     @Published public var errorMessage: String?
     private let service: LoginStartupService
+    private let preferences: UserDefaults
+    private let configuredKey = "backgroundLoginStartupConfigured"
 
     public convenience init() { self.init(service: NativeLoginStartupService()) }
 
-    init(service: LoginStartupService) {
+    init(service: LoginStartupService, preferences: UserDefaults = .standard) {
         self.service = service
+        self.preferences = preferences
         refresh()
     }
 
@@ -35,8 +38,18 @@ import ServiceManagement
         errorMessage = nil
         updateStatus()
     }
+    public func configureDefaultIfNeeded() {
+        guard !preferences.bool(forKey: configuredKey) else { return }
+        changeEnabled(true)
+        if errorMessage == nil && (enabled || needsApproval) { preferences.set(true, forKey: configuredKey) }
+    }
 
     public func setEnabled(_ enabled: Bool) {
+        preferences.set(true, forKey: configuredKey)
+        changeEnabled(enabled)
+    }
+
+    private func changeEnabled(_ enabled: Bool) {
         errorMessage = nil
         let status = service.status
         do {

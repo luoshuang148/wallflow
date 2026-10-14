@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Combine
 import WallpaperCore
 import WallpaperRuntime
 
@@ -14,11 +15,14 @@ import WallpaperRuntime
     }
 }
 
-@MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
+@MainActor final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var model: LibraryModel!
     private var workshop: WorkshopModel!
     private var player: BackgroundPlayerController!
     private var exit: ManagementExitCoordinator!
+    private var statusItem: NSStatusItem?
+    private var pauseItem: NSMenuItem?
+    private var cancellable: AnyCancellable?
     private var window: NSWindow!
     private var startup = LoginStartupModel()
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
@@ -28,8 +32,11 @@ import WallpaperRuntime
     private var connectedSession: UUID?
     private var lastPlayerError: String?
     private var terminationStarted = false
+    private var backgroundLogin = false
+    private var managementRestored = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        backgroundLogin = ManagementLaunchPolicy.startsInBackground(NSAppleEventManager.shared().currentAppleEvent)
         let url = BackgroundPlayerPaths.defaultStateURL
         model = LibraryModel(storeURL: url, mode: .management)
         workshop = WorkshopModel(library: model)
@@ -44,6 +51,9 @@ import WallpaperRuntime
             self?.quit()
         })
         setupMainMenu()
+        if !backgroundLogin { setupStatusItem() }
+        startup.configureDefaultIfNeeded()
+        if let error = startup.errorMessage { model.errorMessage = error }
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 690),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         window.title = "WallFlow"
@@ -54,16 +64,19 @@ import WallpaperRuntime
         setupLifecycle()
         timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in Task { @MainActor in self?.requestRefresh() } }
         RunLoop.main.add(timer!, forMode: .common)
-        showLibrary()
-        Task { await model.restore() }
+        if !backgroundLogin { showLibrary() }
         startupTask = Task { [weak self] in
             guard let self else { return }
             do {
                 try await self.player.ensureRunning()
                 self.connectedSession = self.player.status?.sessionID
-                self.requestRefresh()
+                if self.backgroundLogin { self.quit() }
+                else { self.requestRefresh() }
             } catch is CancellationError { }
-            catch { self.model.errorMessage = error.localizedDescription }
+            catch {
+                self.model.errorMessage = error.localizedDescription
+                if self.backgroundLogin { self.showLibrary() }
+            }
         }
     }
     private func setupMainMenu() {
@@ -78,6 +91,28 @@ import WallpaperRuntime
         editItem.submenu = edit; menu.addItem(editItem)
         NSApplication.shared.mainMenu = menu
     }
+    private func setupStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = item
+        let menu = NSMenu(); menu.delegate = self
+        let open = NSMenuItem(title: "管理壁纸…", action: #selector(showLibrary), keyEquivalent: ""); open.target = self
+        menu.addItem(open); menu.addItem(.separator())
+        let pause = NSMenuItem(title: "全部暂停", action: #selector(togglePause), keyEquivalent: ""); pause.target = self
+        pauseItem = pause; menu.addItem(pause); menu.addItem(.separator())
+        let quit = NSMenuItem(title: "退出 WallFlow（壁纸继续播放）", action: #selector(quit), keyEquivalent: ""); quit.target = self
+        menu.addItem(quit); item.menu = menu
+        cancellable = model.$state.map(\.manuallyPaused).removeDuplicates().sink { [weak self] paused in
+            let image = NSImage(systemSymbolName: paused ? "pause.rectangle" : "play.rectangle", accessibilityDescription: "WallFlow")
+            image?.isTemplate = true
+            self?.statusItem?.button?.image = image
+            self?.statusItem?.button?.toolTip = paused ? "WallFlow · 已暂停" : "WallFlow"
+        }
+    }
+    func menuWillOpen(_ menu: NSMenu) {
+        pauseItem?.title = model.state.manuallyPaused ? "恢复播放" : "全部暂停"
+        pauseItem?.isEnabled = !model.state.projects.isEmpty
+    }
+    @objc private func togglePause() { model.togglePause() }
     private func setupLifecycle() {
         // The management model uses these flags only for its silent preview.
         let workspace = NSWorkspace.shared.notificationCenter
@@ -93,14 +128,6 @@ import WallpaperRuntime
         observe(DistributedNotificationCenter.default(), Notification.Name(SharedStateStore.notification), object: model.storeURL.path) { $0.requestRefresh() }
         observePlayerExit(BackgroundPlayerPaths.stoppingNotification) { $0.quiesce() }
         let center = DistributedNotificationCenter.default()
-        let quitManagement = center.addObserver(forName: BackgroundPlayerPaths.managementQuitNotification, object: model.storeURL.path, queue: .main) { [weak self] notification in
-            Task { @MainActor in
-                guard let self, !self.terminationStarted else { return }
-                do { if try self.player.isManagementQuitRequest(notification) { self.quit() } }
-                catch { self.model.errorMessage = error.localizedDescription }
-            }
-        }
-        observers.append((center, quitManagement))
         let stopped = center.addObserver(forName: BackgroundPlayerPaths.stoppedNotification, object: model.storeURL.path, queue: .main) { [weak self] notification in
             let session = (notification.userInfo?["session"] as? String).flatMap(UUID.init(uuidString:))
             Task { @MainActor in
@@ -127,7 +154,7 @@ import WallpaperRuntime
         }))
     }
     private func requestRefresh() {
-        guard !terminationStarted, refreshTask == nil else { return }
+        guard !terminationStarted, managementRestored, refreshTask == nil else { return }
         refreshTask = Task { [weak self] in
             guard let self else { return }
             defer { self.refreshTask = nil }
@@ -147,6 +174,12 @@ import WallpaperRuntime
     }
     private func quiesce() { workshop?.shutdown(); model?.shutdown() }
     @objc private func showLibrary() {
+        backgroundLogin = false
+        if statusItem == nil { setupStatusItem() }
+        if !managementRestored {
+            managementRestored = true
+            Task { await model.restore() }
+        }
         window?.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
         window?.makeFirstResponder(nil)
@@ -165,6 +198,9 @@ import WallpaperRuntime
     }
     func applicationWillTerminate(_ notification: Notification) {
         timer?.invalidate(); refreshTask?.cancel(); startupTask?.cancel()
+        cancellable?.cancel()
+        if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
+        statusItem = nil
         quiesce()
         for (center, token) in observers { center.removeObserver(token) }
         observers.removeAll()
