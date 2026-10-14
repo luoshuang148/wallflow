@@ -4,6 +4,37 @@ import WallpaperCore
 @testable import WallpaperRuntime
 
 @MainActor final class DesktopPlaybackHostTests: XCTestCase {
+    func testPackagedHelperActuallyExitsAfterCommandNotification() async throws {
+        guard let appPath = ProcessInfo.processInfo.environment["WALLFLOW_PLAYER_APP"] else {
+            throw XCTSkip("Set WALLFLOW_PLAYER_APP to a built helper bundle; uses an empty temporary library")
+        }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let paths = BackgroundPlayerPaths(stateURL: root.appendingPathComponent("state.json"))
+        try StateStore.save(AppState(), to: paths.stateURL)
+        let original = try Data(contentsOf: paths.stateURL)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: appPath).appendingPathComponent("Contents/MacOS/WallFlowPlayer")
+        process.arguments = ["--wallflow-state", paths.stateURL.path]
+        process.standardOutput = FileHandle.nullDevice; process.standardError = FileHandle.nullDevice
+        try process.run()
+        defer { if process.isRunning { process.terminate() } }
+        let startupDeadline = Date().addingTimeInterval(10)
+        var ready: PlayerStatus?
+        while Date() < startupDeadline {
+            if let status = try paths.readStatus(), status.phase == .ready { ready = status; break }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        let status = try XCTUnwrap(ready)
+        XCTAssertEqual(status.pid, process.processIdentifier)
+        try paths.requestStop(session: status.sessionID)
+        let deadline = Date().addingTimeInterval(10)
+        while process.isRunning && Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }
+        XCTAssertFalse(process.isRunning, "AppKit terminateLater must finish in the packaged process")
+        XCTAssertFalse(try paths.hasOwner())
+        XCTAssertEqual(try paths.readStatus()?.phase, .stopped)
+        XCTAssertEqual(try Data(contentsOf: paths.stateURL), original)
+    }
     func testStopNotificationInvokesAppKitTerminationOutsideSwiftTask() async throws {
         _ = NSApplication.shared
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
