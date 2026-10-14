@@ -3,6 +3,8 @@ import Combine
 import AVFoundation
 import WallpaperCore
 
+public enum LibraryMode { case standalone, management, player }
+
 @MainActor public final class LibraryModel: ObservableObject {
     @Published public private(set) var state = AppState()
     @Published public private(set) var displays: [Display] = Display.current
@@ -16,6 +18,8 @@ import WallpaperCore
     private var playlistClock = PlaylistClock()
     public let engine = WallpaperEngine()
     public let storeURL: URL
+    public let mode: LibraryMode
+    @Published private var externalPlaybackStatus: [String: String] = [:]
     private var intent = PlaybackIntent()
     private var readyProjects: Set<String> = []
     private var generation = 0
@@ -26,10 +30,12 @@ import WallpaperCore
     private var lowPowerMode = false
     private var terminating = false
 
-    public init(storeURL: URL) {
+    public init(storeURL: URL, mode: LibraryMode = .standalone) {
         self.storeURL = storeURL
+        self.mode = mode
         do { state = try StateStore.load(from: storeURL) }
         catch {
+            if mode != .standalone { persistenceBlocked = true }
             let backup = storeURL.appendingPathExtension("damaged-\(Int(Date().timeIntervalSince1970))")
             do {
                 try FileManager.default.copyItem(at: storeURL, to: backup)
@@ -45,7 +51,7 @@ import WallpaperCore
         engine.setOcclusionPolicy(state.performance.pauseWhenOccluded)
         engine.setMuted(state.isMuted)
     }
-    public func restore() async {
+    public func restore(revalidate: Bool = true) async {
         guard !terminating else { return }
         let ticket = beginOperation()
         defer { endOperation() }
@@ -53,6 +59,9 @@ import WallpaperCore
         var info: [String: MediaInfo] = [:]
         for project in state.projects {
             do {
+                if !revalidate, readyProjects.contains(project.id), let cached = mediaInfo[project.id] {
+                    restored.insert(project.id); info[project.id] = cached; continue
+                }
                 let fresh = try WallpaperProject.load(folder: URL(fileURLWithPath: project.folderPath))
                 guard fresh.videoPath == project.videoPath else { throw WallpaperError.message("视频路径已改变，请重新导入。") }
                 info[project.id] = try await MediaValidator.validate(url: URL(fileURLWithPath: fresh.videoPath))
@@ -66,6 +75,7 @@ import WallpaperCore
         guard ticket == generation else { return }
         readyProjects = restored
         mediaInfo = info
+        guard mode != .management else { return }
         if applicationEffects.stopped { engine.stop(); return }
         do {
             var playable = state
@@ -120,6 +130,7 @@ import WallpaperCore
     }
     public func prepareForTermination() -> [ExitWallpaper] {
         shutdown()
+        guard mode != .management else { return [] }
         return displays.compactMap { display in
             // An installed session is authoritative even if an apply is still preparing.
             if let session = engine.sessions[display.id] {
@@ -155,11 +166,11 @@ import WallpaperCore
                 guard displays.contains(where: { $0.id == target }) else { throw WallpaperError.message("显示器已断开，请重新选择屏幕。") }
                 next.assignments[target] = assignment
             } else { next.applyToAll(assignment, displays: displays.map(\.id)) }
-            if applicationEffects.stopped {
+            if applicationEffects.stopped || mode == .management {
                 try commit(next)
                 readyProjects.insert(projectID); mediaInfo[projectID] = info
                 if !fromPlaylist { playlistClock.noteManualChoice(projectID,settings:state.playlist,now:Date()) }
-                engine.stop(); errorMessage = nil
+                if mode != .management { engine.stop() }; errorMessage = nil
                 return true
             }
             var playable = next
@@ -245,7 +256,9 @@ import WallpaperCore
         if reasons.contains(.lowPowerMode) { intent.suspensions.insert("lowPowerMode") }
         applyRuntimePolicy()
     }
+    public func setExternalPlaybackStatus(_ status: [String: String]) { externalPlaybackStatus = status }
     public func playbackStatus(for displayID: String) -> String {
+        if mode == .management { return externalPlaybackStatus[displayID] ?? "等待后台播放" }
         if applicationEffects.stopped { return "应用规则 · 已释放" }
         if applicationEffects.paused { return "应用规则 · 暂停" }
         if state.manuallyPaused { return "手动暂停" }
@@ -257,6 +270,7 @@ import WallpaperCore
         return engine.sessions[displayID] == nil ? "等待播放" : (applicationEffects.muted ? "播放中 · 规则静音" : "播放中")
     }
     private func reconcile() {
+        guard mode != .management else { return }
         guard !terminating else { return }
         guard !applicationEffects.stopped else { engine.stop(); return }
         var playable = state
@@ -266,6 +280,7 @@ import WallpaperCore
     }
     private var effectiveMuted: Bool { state.isMuted || applicationEffects.muted }
     private func applyRuntimePolicy() {
+        guard mode != .management else { return }
         guard !terminating else { return }
         if applicationEffects.stopped { engine.stop(); return }
         engine.setMuted(effectiveMuted)
@@ -325,6 +340,7 @@ import WallpaperCore
         return (ignoringBusy || !isBusy) && intent.shouldPlay && !applicationEffects.stopped && targetAvailable && !allOccluded
     }
     public func tickPlaylist(now: Date = Date(), calendar: Calendar = .current) async {
+        guard mode != .management else { return }
         guard !terminating else { return }
         let settings = state.playlist
         let current = settings.targetDisplayID.map { state.assignment(for:$0) } ?? state.defaultAssignment
@@ -340,8 +356,36 @@ import WallpaperCore
     private func commit(_ next: AppState) throws {
         guard !terminating else { throw CancellationError() }
         guard !persistenceBlocked else { throw WallpaperError.message("请先处理无法读取的设置文件，再重新启动软件。") }
-        try StateStore.save(next, to: storeURL)
-        state = next
+        if mode == .standalone {
+            try StateStore.save(next, to: storeURL); state = next
+        } else {
+            state = try SharedStateStore.saveChanges(base: state, next: next, to: storeURL)
+        }
+        intent.manuallyPaused = state.manuallyPaused
+    }
+    public func reloadSharedState() async {
+        guard !terminating else { return }
+        do {
+            let fresh = try StateStore.load(from: storeURL)
+            guard fresh != state else { return }
+            let old = state
+            state = fresh
+            intent.manuallyPaused = fresh.manuallyPaused
+            if old.playlist != fresh.playlist { playlistClock.reset() }
+            if old.defaultAssignment != fresh.defaultAssignment || old.assignments != fresh.assignments {
+                if let id = fresh.defaultAssignment?.projectID { playlistClock.noteManualChoice(id, settings: fresh.playlist, now: Date()) }
+            }
+            let changedIDs = Set(fresh.projects.filter { project in !old.projects.contains(project) }.map(\.id))
+            readyProjects.subtract(changedIDs)
+            mediaInfo = mediaInfo.filter { entry in !changedIDs.contains(entry.key) && fresh.projects.contains { $0.id == entry.key } }
+            // Refresh policies first; unchanged sessions keep their current playback time.
+            engine.setOcclusionPolicy(fresh.performance.pauseWhenOccluded)
+            updatePowerState(onBattery: onBattery, lowPowerMode: lowPowerMode)
+            refreshApplicationEffects()
+            if old.projects != fresh.projects || old.assignments != fresh.assignments || old.defaultAssignment != fresh.defaultAssignment {
+                await restore(revalidate: false)
+            } else { applyRuntimePolicy() }
+        } catch { errorMessage = error.localizedDescription }
     }
     private func beginOperation() -> Int {
         generation += 1
