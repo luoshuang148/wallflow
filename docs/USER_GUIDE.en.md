@@ -2,11 +2,11 @@
 
 [Back to the homepage](../README.en.md) · [简体中文](USER_GUIDE.md)
 
-Installation and menu paths below describe the published **0.7.1** app. For newer source builds, also check the [changelog](../CHANGELOG.md).
+Installation and menu paths below describe the published **0.9.3 (build 22)** app. For newer source builds, also check the [changelog](../CHANGELOG.md).
 
 ## Installation and updates
 
-Download `WallFlow-0.7.1-macOS-arm64.zip` from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest), extract it, and move `WallFlow.app` to Applications. Requires macOS 14+ and Apple Silicon. Intel has no prebuilt download and has not been fully tested.
+Download `WallFlow-0.9.3-macOS-arm64.zip` from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest), extract it, and move `WallFlow.app` to Applications. Requires macOS 14+ and Apple Silicon. Intel has no prebuilt download and has not been fully tested.
 
 The app is ad-hoc signed, without Developer ID signing or notarization. If macOS blocks it, try opening it first, then follow [Apple's instructions](https://support.apple.com/en-us/102445) under System Settings → Privacy & Security → Open Anyway. The release includes no wallpapers, SteamCMD, or FFmpeg.
 
@@ -16,11 +16,11 @@ Place `SHA256SUMS.txt` beside the ZIP and check integrity with:
 shasum -a 256 -c SHA256SUMS.txt
 ```
 
-Before updating, quit the old app normally from the menu bar. Replace the app while keeping your original media and local data.
+Before updating, choose **停止壁纸并完全退出** (Stop wallpaper and completely quit) in Settings and wait for the player to stop. On version 0.8.x and earlier, quit normally from the menu bar. Replace the app while keeping your original media and local data.
 
 ## Import and play
 
-1. Choose **创意工坊 → 导入壁纸文件夹** (Workshop → Import wallpaper folder) and select a complete folder containing `project.json` and its video.
+1. Choose **创意工坊 → 其他来源 → 导入壁纸文件夹…** (Workshop → Other sources → Import wallpaper folder) and select a complete folder containing `project.json` and its video.
 2. Select a wallpaper, choose **应用到** (Display), **画面显示** (Fill/Fit), and **声音** (Audio), then apply. Audio choices take effect immediately and are saved.
 3. Right-click the wallpaper or use the pencil beside its title to rename it. Use the star to mark favorites.
 4. Open **设置 → 壁纸库与自动播放** (Settings → Library and autoplay) for groups, playlists, app rules, and login startup.
@@ -28,11 +28,13 @@ Before updating, quit the old app normally from the menu bar. Replace the app wh
 
 WallFlow references the original video files; keep them accessible. Removing an entry does not delete source media. Custom names remain local and do not modify `project.json`.
 
-Closing the window hides management while playback continues. In 0.7.1, normal menu-bar Quit saves the current video frame as the system wallpaper and stops video and audio. If an app rule released the player, the assigned video's first frame is used. Relaunching restores display assignments, audio, and pause preferences, without promising the exact previous playback position.
+Closing the window hides management while playback continues. Menu-bar Quit and Command-Q quit management and remove its menu-bar icon; the independent **WallFlowPlayer** keeps playing videos, audio, and playlists and applying pause policies. Reopening WallFlow reconnects to the running player without resetting playback.
+
+To stop playback, choose **停止壁纸并完全退出** (Stop wallpaper and completely quit) at the bottom of Settings. This stops the background player and saves the current video frame as the system wallpaper. If an app rule released the player, the assigned video's first frame is used. Relaunching after a complete exit restores assignments, audio, and pause settings without promising the exact previous playback position.
 
 Static wallpaper changes affect only each display's **current Space**. Other Spaces retain their system wallpapers. Force-quitting cannot perform exit saving.
 
-In 0.7.1, playlists and login startup are off by default, and app rules start empty. Source builds can have different defaults. Login startup uses macOS Login Items; it may need approval and an installation in Applications. macOS may also ask for access to protected folders containing imported media; files you deny access to cannot play.
+Playlists are off by default and app rules start empty. On first launch, login startup defaults to running the background player directly, without a management window or menu-bar icon. Disabling startup in Settings is remembered. Login startup uses macOS Login Items and may need approval and an installation in Applications. macOS may also ask for access to protected folders containing imported media; files you deny access to cannot play.
 
 ## Optional tools
 
@@ -66,6 +68,8 @@ The macOS SteamCMD tool is an Intel application and may require Rosetta on Apple
 
 Enter your account name under **下载账号** (Download account), then click **登录下载账号** (Log in to download account). Complete Steam login and Steam Guard in the terminal opened by the app. You can paste a Workshop link or item ID, or read your subscriptions and select video items to download and import.
 
+**浏览工坊…** (Browse Workshop) opens the official website inside the app, initially filtered to Video. Search and select an item, then use **下载此作品** (Download this item) on eligible video details pages. Downloads are validated and imported without automatically changing the desktop. Browsing and subscription reading share the persistent WebKit web session.
+
 Steam's web session and SteamCMD's download session are separate. Reading subscriptions does not subscribe, unsubscribe, or delete local wallpapers. Access depends on Steam and your account; deleted, hidden, or restricted items may be unavailable.
 
 ## Local data
@@ -77,6 +81,7 @@ For compatibility, settings remain under `~/Library/Application Support/VideoWal
 | `state.json` | Library, display assignments, custom names, playback, and automation settings |
 | `workshop.json` | Download account name and tool paths |
 | `ConvertedVideos/` | Converted media cache; keep files still in use |
+| `Runtime/` | Singleton lease, current player session, and shutdown requests; no account credentials |
 | `ExitWallpapers/` | Static frames installed as system wallpapers; older images may still be used by other Spaces |
 
 WebKit manages the web session; SteamCMD manages download login. WallFlow does not extract or copy passwords, cookies, or login tokens into the repository. Build output, media, tool folders, local settings, Steam sessions, logs, and common credentials are excluded by `.gitignore`.
@@ -91,12 +96,12 @@ WebKit manages the web session; SteamCMD manages download login. WallFlow does n
 | Conversion fails | FFmpeg executable, readable source media, and free cache space |
 | Download requests login | SteamCMD needs its own login even if the webpage is logged in |
 | Wallpaper stays paused | Your power, occlusion, and per-app playback policies |
-| Playback continues after closing | Closing hides management; use the exit action appropriate for your version |
+| Playback continues after closing | Closing and management Quit preserve playback; use the complete-exit action in Settings |
 
 See [known issues](KNOWN_ISSUES.md) for validation limits. If the issue remains, use the [bug report form](https://github.com/luoshuang148/wallflow/issues/new?template=bug_report.yml), or the [help form](https://github.com/luoshuang148/wallflow/issues/new?template=question.yml) for usage questions. Remove account details, personal paths, credentials, and session data from attachments.
 
 ## Uninstall
 
-Quit WallFlow normally first. Disable login startup if enabled, then move the app to Trash.
+Disable login startup in Settings, then choose **停止壁纸并完全退出** (Stop wallpaper and completely quit). Once the background player has stopped, move the app to Trash.
 
 Deleting the app does not remove local settings. If you no longer need them, open `~/Library/Application Support/VideoWallpaper/` with Finder's Go to Folder and manually remove settings and caches. This does not delete original videos. Replace system wallpapers before removing `ExitWallpapers/`, because other Spaces may still reference these images.

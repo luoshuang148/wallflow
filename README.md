@@ -16,6 +16,7 @@
   <a href="https://github.com/luoshuang148/wallflow/releases/latest"><img src="https://img.shields.io/github/v/release/luoshuang148/wallflow?label=release&amp;color=2675d8" alt="最新发布版本"></a>
   <a href="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml"><img src="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml/badge.svg" alt="macOS CI"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-555555?logo=apple&amp;logoColor=white" alt="macOS 14 或更新版本">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2675d8" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/download-Apple%20Silicon-2675d8" alt="下载适用于 Apple Silicon">
 </p>
 
@@ -23,7 +24,7 @@
 
 WallFlow 适合希望在 Mac 上播放视频壁纸、管理自己的壁纸库，或导入 Wallpaper Engine 视频作品的用户。它使用 SwiftUI、AppKit 和 AVFoundation 构建，支持本地视频项目，以及通过 SteamCMD 下载有权访问的创意工坊视频作品。
 
-> **下载前请确认：** 公开安装包为 **0.7.1**，要求 **macOS 14+、Apple Silicon（M 系列芯片）**；应用界面目前为简体中文。仅支持**视频壁纸**，不支持 Scene、网页或程序壁纸。安装包尚未经过 Apple 公证。
+> **下载前请确认：** 公开安装包为 **0.9.3**，要求 **macOS 14+、Apple Silicon（M 系列芯片）**；应用界面目前为简体中文。仅支持**视频壁纸**，不支持 Scene、网页或程序壁纸。安装包尚未经过 Apple 公证。
 
 [功能](#功能亮点) · [安装](#下载安装) · [开始使用](#开始使用) · [常见问题](#常见问题) · [贡献](#参与项目)
 
@@ -37,15 +38,15 @@ WallFlow 适合希望在 Mac 上播放视频壁纸、管理自己的壁纸库，
 | 自动切换 | 设置顺序或随机轮播、日夜切换和目标屏幕 |
 | 声音控制 | 选择静音或播放声音，多屏时只由一块正在播放的屏幕出声 |
 | 播放策略 | 根据桌面遮挡、电池、低电量模式、锁屏、休眠或指定应用调整播放 |
-| 创意工坊导入 | 按链接或编号下载，读取账号订阅，扫描本机已下载的视频项目 |
+| 创意工坊导入 | 内嵌浏览官方工坊并下载视频，按链接或编号下载，读取订阅和扫描本机项目 |
 | 格式转换 | 通过可选的 FFmpeg 转换无法原生播放的视频，保留原文件 |
-| 退出保留画面 | 0.7.1 正常退出时保存当前画面为静态壁纸，重新打开后恢复动态播放与设置 |
+| 退出保留画面 | 退出管理程序后后台继续播放；完整退出时保留静态画面，重新打开恢复设置 |
 
 源码版本的行为可能与公开安装包不同，请查看[更新日志](CHANGELOG.md)。本项目不承诺所有硬件、编码和多屏组合都已验证，具体边界见[已知问题](docs/KNOWN_ISSUES.md)。
 
 ## 下载安装
 
-1. 前往 [Releases](https://github.com/luoshuang148/wallflow/releases/latest)，下载 `WallFlow-0.7.1-macOS-arm64.zip`。
+1. 前往 [Releases](https://github.com/luoshuang148/wallflow/releases/latest)，下载 `WallFlow-0.9.3-macOS-arm64.zip`。
 2. 解压，将 `WallFlow.app` 拖入 **应用程序** 文件夹，再打开。
 3. 如果 macOS 阻止打开，在尝试打开后前往 **系统设置 → 隐私与安全性 → 仍要打开**。请按 [Apple 官方说明](https://support.apple.com/zh-cn/102445)确认该应用的例外。
 
@@ -60,14 +61,14 @@ WallFlow 适合希望在 Mac 上播放视频壁纸、管理自己的壁纸库，
 shasum -a 256 -c SHA256SUMS.txt
 ```
 
-更新前先从菜单栏正常退出旧版，然后替换应用，保留原视频和本地数据目录。[详细安装与卸载说明](docs/USER_GUIDE.md)
+更新前先在 **设置** 中选择 **停止壁纸并完全退出**，确认后台已停止，再替换应用；0.8.x 及更早版本使用菜单栏退出。保留原视频和本地数据目录。[详细安装与卸载说明](docs/USER_GUIDE.md)
 
 </details>
 
 ## 开始使用
 
 1. 准备一个包含 `project.json` 和视频文件的完整视频壁纸文件夹。
-2. 在 **创意工坊 → 导入壁纸文件夹** 中选择该文件夹（0.7.1 的入口）。
+2. 在 **创意工坊 → 其他来源 → 导入壁纸文件夹…** 中选择该文件夹。
 3. 选中壁纸，设置 **应用到**、**画面显示** 和 **声音**，再点击应用。
 
 原生可播放的 MP4 视频项目无需额外工具。**本地导入不要求 Steam 账号或 Wallpaper Engine 购买记录**；创意工坊下载需要 [Valve SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) 和拥有 Wallpaper Engine、可访问对应作品的 Steam 账号。其他视频格式可能需要 FFmpeg。
@@ -80,7 +81,7 @@ WallFlow 引用原视频文件，请保留导入文件夹。从壁纸库移除�
 
 **支持 Wallpaper Engine 的所有壁纸吗？** 仅支持视频项目。Scene、网页和程序项目不在当前支持范围内。
 
-**为什么关闭窗口后仍在播放？** 关闭窗口会收起管理界面。0.7.1 从菜单栏退出会停止播放并保留静态画面。
+**为什么关闭窗口后仍在播放？** 关闭窗口会收起管理界面。从菜单栏退出或按 `⌘Q` 会退出管理程序，独立后台播放器继续播放；在 **设置 → 停止壁纸并完全退出** 中停止播放并保留静态画面。
 
 **退出时会更新所有桌面空间吗？** 只更新每块显示器当前所在的 Space。强制结束进程无法保存退出画面。
 
@@ -113,6 +114,6 @@ open dist/WallFlow.app
 
 ## 许可与第三方资源
 
-**本仓库尚未添加开源许可证，授权方案待作者确定。**
+WallFlow 以 [MIT 许可证](LICENSE)发布。第三方工具与壁纸资源不包含在本项目的授权范围内。
 
 WallFlow 是独立项目，与 Valve、Steam、Wallpaper Engine 无隶属或官方合作关系。第三方工具与壁纸遵循各自许可和作者授权；请只导入或分享你有权使用的资源。

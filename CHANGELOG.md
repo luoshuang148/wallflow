@@ -2,24 +2,49 @@
 
 仅记录已有提交能确认的变化。日期使用 Asia/Shanghai。
 
-## 0.9.3 — Unreleased
+## [0.9.3](https://github.com/luoshuang148/wallflow/releases/tag/v0.9.3) — 2026-10-15
+
+本次公开发布包含 0.8.0–0.9.3 的全部开发改动，build 22。
+This release includes all development changes from 0.8.0 through 0.9.3 (build 22).
+
+### 新增与改进 / Added and improved
+
+- 内嵌官方 Steam 创意工坊浏览、筛选与视频下载；浏览和订阅读取共享网页会话。
+- 独立后台播放器：退出管理界面或按 `⌘Q` 后继续播放、轮播、声音及自动暂停规则；再次打开连接已有播放进度。
+- 设置中的“停止壁纸并完全退出”停止后台并保留各屏当前 Space 的静态画面。
+- 登录启动默认直接运行后台播放器；迁移旧登录项，保留用户关闭选择与系统授权状态。
+- 新版 WallFlow 图标、面向公众的双语文档和 MIT 许可证。
+
+- Browse the official Steam Workshop in-app, filter videos, and download eligible items using SteamCMD.
+- Keep wallpaper playback, playlists, audio, and pause policies running in an independent player after quitting management.
+- Reconnect to the running player on reopen; use the complete-exit action in Settings to stop playback and save still frames for each display's current Space.
+- Launch the background player directly at login, preserving user choices and macOS approval status during migration.
+- Updated branding, public bilingual documentation, and the MIT License.
+
+### 更新提示 / Updating
+
+从 0.7.1 升级：先从旧版菜单栏退出再替换应用。使用 0.9.x 开发版时，先在设置中选择“停止壁纸并完全退出”。保留原媒体和本地数据。签名仍为 ad-hoc，尚无 Developer ID 签名或 Apple 公证；安装包要求 macOS 14+、Apple Silicon。
+
+From 0.7.1, quit normally from the menu bar before replacing the app. From a 0.9.x development build, use the complete-exit action in Settings first. Keep original media and local data. The download requires macOS 14+ and Apple Silicon; it remains ad-hoc signed without Developer ID signing or Apple notarization.
+
+### 0.9.3 登录启动修复 / Login startup fixes
 
 - 登录项直接注册后台播放程序 WallFlowPlayer，成功后移除旧的管理程序登录项。
 - 登录启动查询与修改不创建壁纸播放实例；关闭自启保留当前播放。
 - 迁移尊重系统撤销的授权与用户关闭选择，失败提示并可重试。
 
-## 0.9.2 — Unreleased
+## 0.9.2 — 开发阶段，已包含在 0.9.3 / Development changes included in 0.9.3
 
 - 管理程序拥有菜单栏图标，普通退出和 `⌘Q` 同时移除图标并保持后台播放；重新打开软件进入设置可停止壁纸。
 - 首次打开默认启用登录后后台播放，不显示管理窗口或菜单栏图标；用户关闭自启后保持选择。
 - 根据系统登录启动事件仅拉起后台后退出，手动打开显示管理界面；关闭自启不会结束当前播放。
 
-## 0.9.1 — Unreleased
+## 0.9.1 — 开发阶段，已包含在 0.9.3 / Development changes included in 0.9.3
 
 - 菜单栏“退出 WallFlow”和 `⌘Q` 都只退出管理程序，保持后台动态播放；完整退出入口统一保留在设置。
 - 保留点击已应用壁纸名称查看详情的功能。
 
-## 0.9.0 — Unreleased
+## 0.9.0 — 开发阶段，已包含在 0.9.3 / Development changes included in 0.9.3
 
 - `⌘Q` 退出管理程序后，独立后台播放器继续播放；重新打开管理程序连接已有后台，不重新开始视频。
 - 设置底部提供“停止壁纸并完全退出”，停止后台并沿用退出静态画面保存机制。
@@ -29,7 +54,7 @@
 - 后台启动只读取已应用到在线屏幕的壁纸，轮播到其他作品时再校验；未使用的目录不影响播放恢复。
 - 设置面板打开时也能正常 ⌘Q 或完整退出，退出通知通过原生事件循环处理，避免异步保存画面时发生等待。
 
-## 0.8.0 — Unreleased
+## 0.8.0 — 开发阶段，已包含在 0.9.3 / Development changes included in 0.9.3
 
 - 创意工坊首页优先展示浏览和订阅读取；文件夹导入、链接下载和本机已下载导入收进“其他来源”菜单。
 - 新增内嵌 Steam 创意工坊浏览入口，使用官方搜索、分类、排序和详情页；默认筛选 Video。

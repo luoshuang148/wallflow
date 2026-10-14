@@ -27,6 +27,8 @@ SwiftPM 使用 Swift 5 语言模式。沿用现有代码风格，不为文档或
 - 导入路径必须位于源项目目录内；取消和过期请求不能安装新播放器。
 - 退出静态画面的历史文件可能被其他 Space 引用，不可按“旧文件”直接清理。
 
+项目使用 [MIT 许可证](LICENSE)，提交的项目贡献按此许可分发。
+
 维护者可按 [发布清单](docs/RELEASING.md) 发版。贡献者请仅提交自己有权授权的代码、文档或资源；第三方工具与壁纸不得混入仓库。
 
 ## English
@@ -58,4 +60,4 @@ SwiftPM uses Swift 5 language mode. Follow existing code style. Behavior changes
 - Keep imported media paths inside the project directory; canceled or stale requests must not install players.
 - Do not automatically delete old exit frames that other Spaces may still use.
 
-See the [release checklist](docs/RELEASING.md) for distribution. Submit only code, documentation, and assets you are entitled to contribute. Do not bundle third-party tools or wallpapers. The repository has no selected open-source license yet; see the README for its current status.
+See the [release checklist](docs/RELEASING.md) for distribution. Submit only code, documentation, and assets you are entitled to contribute. Do not bundle third-party tools or wallpapers. Contributions to this project are distributed under the [MIT License](LICENSE).
