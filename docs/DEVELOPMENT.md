@@ -15,6 +15,8 @@ WallFlow 使用 Swift Package Manager；Swift 6 工具链、Swift 5 语言模式
 | `Sources/WallpaperRuntime/StaticWallpaperKeeper.swift` | 导出视频帧并交给 macOS 静态壁纸接口 |
 | `Sources/WallpaperRuntime/WorkshopModel.swift` | 下载、订阅候选、导入与本机扫描 |
 | `Sources/WallpaperRuntime/SubscriptionBrowser.swift` | WebKit 订阅读取与分页 |
+| `Sources/WallpaperRuntime/WorkshopBrowser.swift` | 官方工坊浏览、导航和请求代次保护的作品信息 |
+| `Sources/VideoWallpaperApp/WorkshopBrowserView.swift` | 浏览窗口、当前作品下载、进度和失败原因 |
 | `Sources/WallpaperRuntime/SteamRunner.swift` | SteamCMD 子进程、取消、超时与输出 |
 | `Sources/WallpaperRuntime/VideoConverter.swift` | FFmpeg 发现、转换与缓存 |
 | `Tests/WallpaperCoreTests/` | 解析、状态、搜索和库功能测试 |

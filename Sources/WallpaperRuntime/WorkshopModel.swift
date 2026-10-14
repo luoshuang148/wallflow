@@ -7,6 +7,7 @@ public enum WorkshopImportResult: Equatable { case imported, existing }
 private struct WorkshopPreferences: Codable { var account: String; var toolPath: String? }
 
 @MainActor public final class WorkshopModel: ObservableObject {
+    public typealias ItemLoader = ([WorkshopID]) async throws -> [WorkshopItem]
     @Published public var input = ""
     @Published public var account = ""
     @Published public private(set) var tool: URL?
@@ -21,9 +22,12 @@ private struct WorkshopPreferences: Codable { var account: String; var toolPath:
     @Published public var errorMessage: String?
     private let library: LibraryModel
     private let preferencesURL: URL
+    private let itemLoader: ItemLoader
     private var operation: Task<Void, Never>?
-    public init(library: LibraryModel, preferencesURL: URL? = nil) {
+    public init(library: LibraryModel, preferencesURL: URL? = nil,
+                itemLoader: @escaping ItemLoader = { try await WorkshopModel.fetchItems($0) }) {
         self.library = library
+        self.itemLoader = itemLoader
         self.preferencesURL = preferencesURL ?? library.storeURL.deletingLastPathComponent().appendingPathComponent("workshop.json")
         let saved = (try? Data(contentsOf: self.preferencesURL)).flatMap { try? JSONDecoder().decode(WorkshopPreferences.self, from: $0) }
         tool = saved?.toolPath.map { URL(fileURLWithPath: $0) } ?? SteamPaths.discoverTool()
@@ -89,13 +93,21 @@ private struct WorkshopPreferences: Codable { var account: String; var toolPath:
         }
     }
     public func downloadInput() {
+        let requested = input
         start { [self] in
-            let id = try WorkshopID(input)
-            status = "正在检查壁纸类型…"
-            let item = try await Self.fetchItems([id])[0]
-            guard item.isVideo else { throw WallpaperError.message("这项作品不是可访问的 Wallpaper Engine 视频壁纸（可能是场景、网页或已删除）。") }
-            try await download([item])
+            try await downloadVerified(WorkshopID(requested))
         }
+    }
+    public func downloadItem(_ id: WorkshopID) { start { [self] in try await downloadVerified(id) } }
+    private func downloadVerified(_ id: WorkshopID) async throws {
+        status = "正在检查壁纸类型…"
+        let items = try await itemLoader([id])
+        try Task.checkCancellation()
+        guard items.count == 1, let item = items.first, item.id == id else {
+            throw WallpaperError.message("Steam 返回的作品信息与下载编号不匹配。")
+        }
+        guard item.isVideo else { throw WallpaperError.message("这项作品不是可访问的 Wallpaper Engine 视频壁纸（可能是场景、网页或已删除）。") }
+        try await download([item])
     }
     public func downloadSelected() { let items = candidates.filter { selected.contains($0.id) }; guard !items.isEmpty else { return }; start { [self] in try await download(items) } }
     public func loadSubscriptions(_ ids: [WorkshopID]) { start { [self] in try await loadCandidates(ids) } }
@@ -114,7 +126,7 @@ private struct WorkshopPreferences: Codable { var account: String; var toolPath:
         for offset in stride(from: 0, to: ids.count, by: 100) {
             try Task.checkCancellation()
             let batch = Array(ids[offset..<min(offset+100, ids.count)])
-            all += try await Self.fetchItems(batch)
+            all += try await itemLoader(batch)
             completed += batch.count; status = "正在筛选视频：\(completed)/\(total)…"
         }
         try Task.checkCancellation()

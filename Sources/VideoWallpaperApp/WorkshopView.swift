@@ -10,6 +10,7 @@ struct WorkshopView: View {
     let onImportFolder: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var showsSubscriptions = false
+    @State private var showsBrowser = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -53,6 +54,7 @@ struct WorkshopView: View {
                         }.padding(8)
                     }
                     HStack {
+                        Button { showsBrowser = true } label: { Label("浏览工坊…", systemImage: "globe") }
                         Button { showsSubscriptions = true } label: { Label("读取 Steam 订阅…", systemImage: "person.crop.circle.badge.checkmark") }
                         Button("导入本机已下载") { model.scanLocal() }
                         Menu("其他来源") {
@@ -113,6 +115,7 @@ struct WorkshopView: View {
         .sheet(isPresented: $showsSubscriptions) {
             SubscriptionView { ids in model.loadSubscriptions(ids); showsSubscriptions = false }
         }
+        .sheet(isPresented: $showsBrowser) { WorkshopBrowserView(model: model, library: library) }
     }
     private func chooseTool() {
         let panel = NSOpenPanel(); panel.title = "选择 SteamCMD 可执行文件 steamcmd"; panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
