@@ -36,6 +36,8 @@ import WallpaperRuntime
         player = BackgroundPlayerController(stateURL: url)
         exit = ManagementExitCoordinator(quiesce: { [weak self] in self?.quiesce() }, stop: { [weak self] in
             guard let self else { throw CancellationError() }
+            // A complete exit requested during launch must also stop the helper being launched.
+            await self.startupTask?.value
             try await self.player.stopAndWait()
         }, recover: { [weak self] in self?.model.resumeManagementAfterFailedExit() }, terminate: {
             NSApplication.shared.terminate(nil)
