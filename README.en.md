@@ -8,12 +8,12 @@
 
 A native macOS video wallpaper app built with SwiftUI, AppKit, and AVFoundation. Import complete Wallpaper Engine **video** wallpaper folders, download Workshop videos with SteamCMD, or browse your account's subscribed videos. The application interface is currently in Simplified Chinese.
 
-Current development version: **0.8.0 (build 18)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
+Current development version: **0.9.0 (build 19)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
 
 ## Features
 
 - Loop videos with independent assignments per display and fill/fit modes.
-- Save the applied video frame as the system's static wallpaper on normal quit; restore video playback and saved preferences on relaunch.
+- Command-Q quits management while an independent background player continues. Settings and the menu bar offer “停止壁纸并完全退出” (Stop wallpaper and completely quit), saving a static frame.
 - Silent animated previews at the video's aspect ratio, with cover fallback and resource cleanup when the window is hidden, minimized, or fully occluded, during sleep, or while another management view is open.
 - Search, local renaming, favorites, groups, sorting, sequential/random playlists, and day/night switching.
 - Optional audio; only one playing display produces sound at a time.
@@ -38,7 +38,7 @@ The release includes no wallpapers, SteamCMD, or FFmpeg. Verify the ZIP by placi
 shasum -a 256 -c SHA256SUMS.txt
 ```
 
-To update, quit the previous version normally from the menu bar before replacing the app. Keep your media files and application data in place.
+To update, use “停止壁纸并完全退出” to stop the background player before replacing the app (use the menu-bar Quit action on version0.8.x and earlier). Keep your media files and application data in place.
 
 ## Optional tools
 
@@ -56,7 +56,7 @@ Applications/
 
 The macOS SteamCMD tool may require Rosetta on Apple Silicon. Steam's web session and SteamCMD's download session are separate logins. Subscription browsing does not subscribe/unsubscribe or delete local wallpapers.
 
-In development version 0.8.0, **创意工坊 → 浏览工坊…** opens the official website inside the app, initially filtered to Video. It shares the persistent web session used by subscription browsing. A SteamCMD login alone does not log into the webpage. Steam determines which items your account may view; inaccessible/deleted/private items are not guaranteed. The download button rechecks the item and imports supported videos without automatically applying a wallpaper.
+Since development version0.8.0, **创意工坊 → 浏览工坊…** opens the official website inside the app, initially filtered to Video. It shares the persistent web session used by subscription browsing. A SteamCMD login alone does not log into the webpage. Steam determines which items your account may view; inaccessible/deleted/private items are not guaranteed. The download button rechecks the item and imports supported videos without automatically applying a wallpaper.
 
 Manual link downloads and importing already-downloaded local items are available under **其他来源** (Other sources). Browsing and subscription reading are the primary actions.
 
@@ -83,9 +83,10 @@ Settings remain in `~/Library/Application Support/VideoWallpaper/` for compatibi
 - `state.json`: library, assignments, names, playback preferences, and automation.
 - `workshop.json`: download account name and tool paths.
 - `ConvertedVideos/`: converted media cache; retain files still in use.
+- `Runtime/`: the singleton lease, current-session status, and shutdown request; no account credentials.
 - `ExitWallpapers/`: installed static frames; older frames may still be referenced by other Spaces.
 
-Closing the management window keeps wallpapers playing. Normal quit saves stills for each display's **current Space only**. Force-quitting cannot save them. Relaunch restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
+Closing the management window or pressing Command-Q keeps wallpapers, audio, playlists and pause policies running in the independent `WallFlowPlayer`. Reopening management connects to the same player without resetting playback. Use the complete-exit action in Settings or the menu bar to stop both processes and save stills for each display's **current Space only**. Force-quitting the player cannot save them. Relaunch after a complete exit restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
 
 See [known issues](docs/KNOWN_ISSUES.md), [contribution guidelines](CONTRIBUTING.md), and the [security policy](SECURITY.md). Third-party tools and wallpaper assets retain their own licenses and author permissions.
 

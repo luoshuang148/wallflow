@@ -7,6 +7,7 @@ struct LibraryView: View {
     @ObservedObject var model: LibraryModel
     @ObservedObject var workshop: WorkshopModel
     @ObservedObject var startup: LoginStartupModel
+    @ObservedObject var exit: ManagementExitCoordinator
     @State private var selectedID: String?
     @State private var renamingProject: WallpaperProject?
     @State private var target = "all"
@@ -49,7 +50,7 @@ struct LibraryView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(accent)
         .sheet(item:$renamingProject) { project in RenameWallpaperView(model:model,project:project) }
-        .sheet(isPresented: $showsSettings) { SettingsView(model:model,startup:startup) }
+        .sheet(isPresented: $showsSettings) { SettingsView(model:model,startup:startup,exit:exit) }
         .sheet(isPresented: $showsWorkshop) { WorkshopView(model:workshop,library:model,onImportFolder:importFolder) }
         .onAppear { selectedID = visibleProjects.first?.id; searchFocused = false }
         .onChange(of: model.state.organization.groups.map(\.id)) { _, ids in

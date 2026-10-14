@@ -5,7 +5,7 @@ import Darwin
 public enum SharedStateStore {
     public static let notification = "local.zongzihao.WallFlow.stateChanged"
 
-    public static func saveChanges(base: AppState, next: AppState, to url: URL) throws -> AppState {
+    public static func saveChanges(base: AppState, next: AppState, to url: URL, validate: (AppState) throws -> Void = { _ in }) throws -> AppState {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let lockURL = url.appendingPathExtension("lock")
         let fd = Darwin.open(lockURL.path, O_CREAT | O_RDWR | O_NOFOLLOW | O_CLOEXEC, S_IRUSR | S_IWUSR)
@@ -13,6 +13,7 @@ public enum SharedStateStore {
         defer { flock(fd, LOCK_UN); Darwin.close(fd) }
         guard flock(fd, LOCK_EX) == 0 else { throw WallpaperError.message("无法锁定壁纸设置。") }
         let current = try StateStore.load(from: url)
+        try validate(current)
         let encoder = JSONEncoder()
         func object(_ state: AppState) throws -> Any { try JSONSerialization.jsonObject(with: encoder.encode(state)) }
         let merged = try merge(base: object(base), next: object(next), current: object(current), path: "设置")!

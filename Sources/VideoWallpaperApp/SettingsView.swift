@@ -4,6 +4,7 @@ import WallpaperRuntime
 struct SettingsView: View {
     @ObservedObject var model: LibraryModel
     @ObservedObject var startup: LoginStartupModel
+    @ObservedObject var exit: ManagementExitCoordinator
     @Environment(\.dismiss) private var dismiss
     @State private var page: Page = .library
     private enum Page: String, CaseIterable {
@@ -42,6 +43,17 @@ struct SettingsView: View {
                         .allowsHitTesting(page == .performance).accessibilityHidden(page != .performance)
                 }.frame(width:650,height:530,alignment:.top)
             }
-        }.padding(20).frame(width:900,height:620)
+            Divider()
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("⌘Q 退出管理程序后，壁纸继续在后台播放。")
+                    if let error = exit.errorMessage { Text(error).foregroundStyle(.orange).textSelection(.enabled) }
+                }.font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button(exit.isExiting ? "正在停止壁纸…" : "停止壁纸并完全退出") {
+                    Task { await exit.stopWallpaperAndExit() }
+                }.disabled(exit.isExiting)
+            }
+        }.padding(20).frame(width:900,height:680)
     }
 }
