@@ -57,7 +57,7 @@ import WallpaperRuntime
         menu.addItem(open); menu.addItem(.separator())
         let pause = NSMenuItem(title: "全部暂停", action: #selector(togglePause), keyEquivalent: ""); pause.target = self
         pauseItem = pause; menu.addItem(pause); menu.addItem(.separator())
-        let quit = NSMenuItem(title: "停止壁纸并完全退出", action: #selector(quit), keyEquivalent: ""); quit.target = self
+        let quit = NSMenuItem(title: "退出 WallFlow（壁纸继续播放）", action: #selector(quitManagement), keyEquivalent: ""); quit.target = self
         menu.addItem(quit); item.menu = menu
         cancellable = host.model.$state.map(\.manuallyPaused).removeDuplicates().sink { [weak self] paused in
             let image = NSImage(systemSymbolName: paused ? "pause.rectangle" : "play.rectangle", accessibilityDescription: "WallFlow")
@@ -72,7 +72,7 @@ import WallpaperRuntime
     }
     @objc private func openManagement() { host?.openManagement() }
     @objc private func togglePause() { host?.model.togglePause() }
-    @objc private func quit() { NSApplication.shared.terminate(nil) }
+    @objc private func quitManagement() { host?.quitManagement() }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let host else { return .terminateNow }
         guard !terminationStarted else { return .terminateLater }

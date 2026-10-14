@@ -9,6 +9,7 @@ struct LibraryView: View {
     @ObservedObject var startup: LoginStartupModel
     @ObservedObject var exit: ManagementExitCoordinator
     @State private var selectedID: String?
+    @State private var revealRequest = 0
     @State private var renamingProject: WallpaperProject?
     @State private var target = "all"
     @State private var fit: FitMode = .fill
@@ -89,38 +90,43 @@ struct LibraryView: View {
                 .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
                 .padding(.horizontal, 16).padding(.bottom, 12)
             libraryFilters.padding(.horizontal,16).padding(.bottom,10)
-            ScrollView {
-                LazyVStack(spacing: 6) {
-                    ForEach(visibleProjects) { item in
-                        Button { selectedID = item.id; searchFocused = false } label: {
-                            HStack(spacing: 10) {
-                                Thumbnail(path: item.previewPath).frame(width: 58, height: 40).clipShape(RoundedRectangle(cornerRadius: 6))
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(model.displayName(for:item)).font(.system(size: 12, weight: .medium)).lineLimit(2)
-                                    if let groupName = model.state.organization.memberships[item.id].flatMap({ id in model.state.organization.groups.first { $0.id == id }?.name }) {
-                                        Text(groupName).font(.system(size:10)).foregroundStyle(.secondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 6) {
+                        ForEach(visibleProjects) { item in
+                            Button { selectedID = item.id; searchFocused = false } label: {
+                                HStack(spacing: 10) {
+                                    Thumbnail(path: item.previewPath).frame(width: 58, height: 40).clipShape(RoundedRectangle(cornerRadius: 6))
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(model.displayName(for:item)).font(.system(size: 12, weight: .medium)).lineLimit(2)
+                                        if let groupName = model.state.organization.memberships[item.id].flatMap({ id in model.state.organization.groups.first { $0.id == id }?.name }) {
+                                            Text(groupName).font(.system(size:10)).foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer(minLength: 0)
+                                    if model.state.organization.favorites.contains(item.id) { Image(systemName:"star.fill").font(.caption).foregroundStyle(.orange) }
+                                }.padding(9).contentShape(Rectangle())
+                                    .background(selectedID == item.id ? accent.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 9))
+                            }.buttonStyle(.plain).id(item.id)
+                            .contextMenu {
+                                Button("重命名…") { searchFocused = false; renamingProject = item }
+                                Button(model.state.organization.favorites.contains(item.id) ? "取消收藏" : "收藏壁纸") { toggleFavorite(item.id) }
+                                Menu("移动到分组") {
+                                    Button("不分组") { moveToGroup(item.id,group:nil) }
+                                    ForEach(model.state.organization.groups) { group in
+                                        Button(group.name) { moveToGroup(item.id,group:group.id) }
                                     }
                                 }
-                                Spacer(minLength: 0)
-                                if model.state.organization.favorites.contains(item.id) { Image(systemName:"star.fill").font(.caption).foregroundStyle(.orange) }
-                            }.padding(9).contentShape(Rectangle())
-                                .background(selectedID == item.id ? accent.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 9))
-                        }.buttonStyle(.plain)
-                        .contextMenu {
-                            Button("重命名…") { searchFocused = false; renamingProject = item }
-                            Button(model.state.organization.favorites.contains(item.id) ? "取消收藏" : "收藏壁纸") { toggleFavorite(item.id) }
-                            Menu("移动到分组") {
-                                Button("不分组") { moveToGroup(item.id,group:nil) }
-                                ForEach(model.state.organization.groups) { group in
-                                    Button(group.name) { moveToGroup(item.id,group:group.id) }
-                                }
+                                Divider()
+                                Button("在 Finder 中显示") { NSWorkspace.shared.selectFile(item.folderPath, inFileViewerRootedAtPath: "") }
+                                Button("从列表移除", role: .destructive) { model.remove(projectID: item.id) }.disabled(model.isBusy)
                             }
-                            Divider()
-                            Button("在 Finder 中显示") { NSWorkspace.shared.selectFile(item.folderPath, inFileViewerRootedAtPath: "") }
-                            Button("从列表移除", role: .destructive) { model.remove(projectID: item.id) }.disabled(model.isBusy)
                         }
-                    }
-                }.padding(.horizontal, 12)
+                    }.padding(.horizontal, 12)
+                }
+                .onChange(of: revealRequest) { _, _ in
+                    if let selectedID { proxy.scrollTo(selectedID) }
+                }
             }
             Spacer(minLength: 12)
             Button { showsWorkshop = true } label: {
@@ -203,16 +209,20 @@ struct LibraryView: View {
             VStack(alignment: .leading, spacing: 9) {
                 ForEach(model.displays) { display in
                     let assignment = model.state.assignment(for: display.id)
-                    let title = model.state.projects.first { $0.id == assignment?.projectID }.map { model.displayName(for:$0) }
+                    let assignedProject = model.state.projects.first { $0.id == assignment?.projectID }
                     HStack(spacing: 9) {
                         Image(systemName: "display").foregroundStyle(.secondary)
                         Text(display.name).font(.caption.weight(.medium))
                         Spacer()
-                        Text(title ?? "系统壁纸").font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                        if title != nil {
-                            Text(model.playbackStatus(for: display.id))
-                                .font(.system(size: 10, weight: .medium)).foregroundStyle(accent)
-                                .padding(.horizontal, 7).padding(.vertical, 3).background(accent.opacity(0.1), in: Capsule())
+                        if let assignedProject {
+                            Button { revealProject(assignedProject.id) } label: {
+                                Text(model.displayName(for: assignedProject)).font(.caption).lineLimit(1)
+                            }
+                            .buttonStyle(.plain).foregroundStyle(accent)
+                            .help("查看壁纸详情")
+                            .accessibilityLabel("查看壁纸详情：\(model.displayName(for: assignedProject))")
+                        } else {
+                            Text("系统壁纸").font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -269,6 +279,16 @@ struct LibraryView: View {
     private func updateFit() {
         let assignment = target == "all" ? model.state.defaultAssignment : model.state.assignment(for: target)
         fit = assignment?.projectID == selectedID ? (assignment?.fit ?? .fill) : .fill
+    }
+    private func revealProject(_ id: String) {
+        if !visibleProjects.contains(where: { $0.id == id }) {
+            searchText = ""
+            favoritesOnly = false
+            groupID = nil
+        }
+        selectedID = id
+        revealRequest += 1
+        searchFocused = false
     }
     private func importFolder() {
         let panel = NSOpenPanel()
