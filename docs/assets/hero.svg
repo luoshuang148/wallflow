@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+  <title id="title">WallFlow — Video wallpapers for macOS</title>
+  <desc id="desc">Blue flowing ribbons represent motion across two desktop displays. A brand illustration, not an application screenshot.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#09162d"/><stop offset="1" stop-color="#142e51"/></linearGradient>
+    <linearGradient id="flow" x2="1" y2="1"><stop stop-color="#81e9ed"/><stop offset=".5" stop-color="#4d9bff"/><stop offset="1" stop-color="#8975fa"/></linearGradient>
+    <clipPath id="screen"><rect x="736" y="90" width="374" height="222" rx="14"/></clipPath>
+    <clipPath id="small"><rect x="1010" y="189" width="180" height="120" rx="10"/></clipPath>
+  </defs>
+  <rect width="1280" height="420" rx="24" fill="url(#bg)"/>
+  <circle cx="1140" cy="40" r="270" fill="#2864ba" opacity=".12"/>
+  <circle cx="870" cy="420" r="220" fill="#38c9cc" opacity=".06"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="64" y="94" fill="#8ecde9" font-size="15" font-weight="600" letter-spacing="3">MADE FOR YOUR MAC</text>
+    <text x="60" y="178" fill="#f4f9ff" font-size="72" font-weight="700" letter-spacing="-3">WallFlow</text>
+    <text x="64" y="226" fill="#e0edfc" font-size="28">Bring motion to your desktop.</text>
+    <text x="64" y="269" fill="#a6bbd3" font-size="18">Video wallpapers · Multiple displays · Your library</text>
+    <rect x="64" y="318" width="111" height="34" rx="17" fill="#244768"/>
+    <text x="119" y="340" text-anchor="middle" fill="#e0edfc" font-size="14">macOS 14+</text>
+    <rect x="188" y="318" width="134" height="34" rx="17" fill="#244768"/>
+    <text x="255" y="340" text-anchor="middle" fill="#e0edfc" font-size="14">Apple Silicon</text>
+  </g>
+  <rect x="724" y="78" width="398" height="247" rx="24" fill="#203959" stroke="#557697" stroke-width="2"/>
+  <rect x="736" y="90" width="374" height="222" rx="14" fill="#0b203b"/>
+  <g clip-path="url(#screen)" fill="none" stroke="url(#flow)">
+    <path d="M694 274 C820 69 894 347 1145 118" stroke-width="66"/>
+    <path d="M701 325 C856 99 932 373 1152 187" stroke-width="22" opacity=".55"/>
+  </g>
+  <path d="M903 326 L900 350 L850 361 L999 361 L949 350 L946 326" fill="#456583"/>
+  <rect x="1000" y="179" width="200" height="141" rx="18" fill="#203959" stroke="#648aab" stroke-width="2"/>
+  <rect x="1010" y="189" width="180" height="120" rx="10" fill="#0b203b"/>
+  <g clip-path="url(#small)" fill="none" stroke="url(#flow)">
+    <path d="M975 307 C1053 152 1108 321 1220 213" stroke-width="42"/>
+    <path d="M990 338 C1070 196 1115 354 1220 251" stroke-width="12" opacity=".55"/>
+  </g>
+  <path d="M1089 321 L1087 341 L1052 350 L1150 350 L1114 341 L1112 321" fill="#547591"/>
+</svg>
