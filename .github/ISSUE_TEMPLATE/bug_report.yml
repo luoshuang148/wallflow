@@ -15,7 +15,7 @@ body:
     attributes:
       label: WallFlow 版本 / Version
       description: 在应用中查看版本；源码构建请附提交编号。 / Include the build number or source commit if available.
-      placeholder: 0.7.1 (build 16)
+      placeholder: 0.9.3 (build 22)
     validations:
       required: true
   - type: input

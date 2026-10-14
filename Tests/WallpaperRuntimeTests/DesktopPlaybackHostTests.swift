@@ -22,7 +22,9 @@ import WallpaperCore
         guard !process.isRunning else { return }
         let reply = try XCTUnwrap((try? JSONSerialization.jsonObject(with: pipe.fileHandleForReading.readDataToEndOfFile())) as? [String: Any])
         XCTAssertEqual(reply["bundleIdentifier"] as? String, "local.zongzihao.VideoWallpaper.Player")
-        XCTAssertEqual(reply["bundlePath"] as? String, appPath)
+        let reportedPath = try XCTUnwrap(reply["bundlePath"] as? String)
+        XCTAssertEqual(URL(fileURLWithPath: reportedPath).resolvingSymlinksInPath(),
+                       URL(fileURLWithPath: appPath).resolvingSymlinksInPath())
         XCTAssertNotNil(reply["status"] as? Int)
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent("Runtime").path))
     }

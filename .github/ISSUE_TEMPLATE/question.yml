@@ -12,7 +12,7 @@ body:
     id: environment
     attributes:
       label: 应用版本与设备 / App version and device
-      placeholder: WallFlow 0.7.1, macOS 14.x, Apple M2
+      placeholder: WallFlow 0.9.3, macOS 14.x, Apple M2
     validations:
       required: true
   - type: textarea

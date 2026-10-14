@@ -16,6 +16,7 @@
   <a href="https://github.com/luoshuang148/wallflow/releases/latest"><img src="https://img.shields.io/github/v/release/luoshuang148/wallflow?label=release&amp;color=2675d8" alt="Latest release"></a>
   <a href="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml"><img src="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml/badge.svg" alt="macOS CI"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-555555?logo=apple&amp;logoColor=white" alt="macOS 14 or newer">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2675d8" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/download-Apple%20Silicon-2675d8" alt="Apple Silicon download">
 </p>
 
@@ -23,7 +24,7 @@
 
 WallFlow is for Mac users who want video wallpapers, a personal wallpaper library, or support for importing Wallpaper Engine video projects. Built with SwiftUI, AppKit, and AVFoundation, it plays local video projects and uses SteamCMD to download Workshop videos your account can access.
 
-> **Before downloading:** The published app is **0.7.1**, for **macOS 14+ and Apple Silicon (M-series chips)**. The app interface is currently **Simplified Chinese**. Only **video wallpapers** are supported; Scene, web, and application wallpapers are outside the current scope. The app is not notarized by Apple.
+> **Before downloading:** The published app is **0.9.3**, for **macOS 14+ and Apple Silicon (M-series chips)**. The app interface is currently **Simplified Chinese**. Only **video wallpapers** are supported; Scene, web, and application wallpapers are outside the current scope. The app is not notarized by Apple.
 
 [Features](#features) · [Install](#install) · [Get started](#get-started) · [FAQ](#faq) · [Contribute](#contribute)
 
@@ -37,15 +38,15 @@ WallFlow is for Mac users who want video wallpapers, a personal wallpaper librar
 | Automatic switching | Configure sequential or random playlists, day/night switching, and target displays |
 | Audio controls | Mute or play audio, with sound from only one playing display at a time |
 | Playback policies | Adjust playback for desktop occlusion, battery, Low Power Mode, lock, sleep, or specific apps |
-| Workshop imports | Download by link or ID, read your subscriptions, and scan local downloads |
+| Workshop imports | Browse the official Workshop in-app and download videos, use links/IDs, read subscriptions, or scan local downloads |
 | Format conversion | Use optional FFmpeg to convert unsupported videos while retaining originals |
-| Still frames on exit | Version 0.7.1 saves a static frame on normal quit and restores playback and settings on relaunch |
+| Still frames on exit | Keep playback running after quitting management; save a still frame on complete exit and restore settings on relaunch |
 
 Source builds may differ from the published download; check the [changelog](CHANGELOG.md). Not every hardware, codec, or display configuration has been validated. See [known issues](docs/KNOWN_ISSUES.md).
 
 ## Install
 
-1. Open [Releases](https://github.com/luoshuang148/wallflow/releases/latest) and download `WallFlow-0.7.1-macOS-arm64.zip`.
+1. Open [Releases](https://github.com/luoshuang148/wallflow/releases/latest) and download `WallFlow-0.9.3-macOS-arm64.zip`.
 2. Extract the ZIP, move `WallFlow.app` to **Applications**, and open it.
 3. If macOS blocks the app, try opening it first, then use **System Settings → Privacy & Security → Open Anyway**. Follow [Apple's official instructions](https://support.apple.com/en-us/102445) to approve an exception for this app.
 
@@ -60,14 +61,14 @@ Place the release's `SHA256SUMS.txt` beside the ZIP and run:
 shasum -a 256 -c SHA256SUMS.txt
 ```
 
-Quit the old app normally from the menu bar before replacing it. Keep original videos and local data. [Installation and uninstall details](docs/USER_GUIDE.en.md)
+Choose **停止壁纸并完全退出** (Stop wallpaper and completely quit) in Settings before replacing the app. On version 0.8.x and earlier, quit normally from the menu bar. Keep original videos and local data. [Installation and uninstall details](docs/USER_GUIDE.en.md)
 
 </details>
 
 ## Get started
 
 1. Prepare a complete video wallpaper folder containing `project.json` and its video.
-2. In version 0.7.1, choose **创意工坊 → 导入壁纸文件夹** (Workshop → Import wallpaper folder).
+2. Choose **创意工坊 → 其他来源 → 导入壁纸文件夹…** (Workshop → Other sources → Import wallpaper folder).
 3. Select the wallpaper, choose **应用到** (Display), **画面显示** (Fill/Fit), and **声音** (Audio), then apply it.
 
 Natively playable MP4 video projects need no additional tools. **Local imports do not require a Steam account or a Wallpaper Engine purchase.** Workshop downloads require [Valve's SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) and a Steam account that owns Wallpaper Engine and can access the item. Other video formats may require FFmpeg.
@@ -80,7 +81,7 @@ The [user guide](docs/USER_GUIDE.en.md) covers tool setup, playlists, power poli
 
 **Does it support every Wallpaper Engine wallpaper?** Only video projects. Scene, web, and application projects are not supported.
 
-**Why does playback continue after closing the window?** Closing the window hides management. In 0.7.1, menu-bar Quit stops playback and saves a still frame.
+**Why does playback continue after closing the window?** Closing the window hides management. Menu-bar Quit and Command-Q quit management while the independent background player keeps playing. Use **停止壁纸并完全退出** (Stop wallpaper and completely quit) in Settings to stop playback and save a still frame.
 
 **Does quitting update every Space?** Only the current Space on each display. Force-quitting cannot save exit frames.
 
@@ -113,6 +114,6 @@ Report vulnerabilities through [private vulnerability reporting](https://github.
 
 ## Licensing and third-party content
 
-**This repository does not yet include an open-source license; the author has not selected one.**
+WallFlow is released under the [MIT License](LICENSE). Third-party tools and wallpapers are not covered by this project's license.
 
 WallFlow is independent and unaffiliated with Valve, Steam, or Wallpaper Engine. Third-party tools and wallpapers retain their own licenses and author permissions. Only import or share content you are entitled to use.

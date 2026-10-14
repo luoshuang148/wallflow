@@ -9,6 +9,11 @@ WallFlow 使用 Swift Package Manager；Swift 6 工具链、Swift 5 语言模式
 | `Sources/VideoWallpaperApp/` | SwiftUI 管理界面、菜单栏、系统通知与退出流程 |
 | `Sources/VideoWallpaperApp/VideoPreviewSurface.swift` | AVPlayerLayer、首帧状态和窗口可见性 |
 | `Sources/WallpaperCore/` | 项目解析、安全路径、搜索、持久化模型和媒体验证 |
+| `Sources/WallFlowPlayer/App.swift` | 独立后台播放器入口、登录控制模式与完整退出 |
+| `Sources/WallpaperCore/SharedStateStore.swift` | 跨进程状态合并、锁与变更通知 |
+| `Sources/WallpaperRuntime/BackgroundPlayer.swift` | 单实例租约、会话状态、启动及停止请求 |
+| `Sources/WallpaperRuntime/DesktopPlaybackHost.swift` | 后台模型与播放策略、系统通知 |
+| `Sources/WallpaperRuntime/PlayerLoginStartup.swift` | 由播放器自身管理 macOS 登录项 |
 | `Sources/WallpaperRuntime/LibraryModel.swift` | 库状态、导入与应用、设置、运行策略和退出快照 |
 | `Sources/WallpaperRuntime/WallpaperEngine.swift` | 各屏桌面窗口、播放器、遮挡、音频与退出冻结 |
 | `Sources/WallpaperRuntime/VideoPreviewModel.swift` | 独立静音预览的生命周期 |
@@ -83,6 +88,8 @@ swift test
 | `STEAM_HTML_FIXTURES` | 本地订阅页面解析样本目录 |
 | `STEAM_TEST_TOOL` | SteamCMD 可执行文件路径 |
 | `STEAM_TEST_ACCOUNT_FILE` | 已登录测试账号名的本地文件 |
+| `WALLFLOW_PLAYER_APP` | 构建后的 `WallFlowPlayer.app` 路径；使用空的临时库验证打包播放器启动与退出 |
+| `STEAM_BROWSER_LIVE_TEST=1` | 验证真实公开工坊浏览和视频详情，不登录或下载作品 |
 
 现有媒体回归样本约定为 3840×2160、约 16.67 秒。桌面集成测试需要可用的 macOS 图形会话，并会短暂创建播放器窗口；建议使用无音轨的视频副本。转换测试还需要 FFmpeg。没有这些环境时，基础测试仍可运行。
 
