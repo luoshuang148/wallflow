@@ -88,9 +88,9 @@ import WallpaperCore
         do {
             if !stopScheduled, try paths.stopRequested(session: sessionID) {
                 stopScheduled = true
-                // terminateLater enters an AppKit nested event loop. A Swift MainActor
-                // task must finish first so the async static-frame export can resume.
-                DispatchQueue.main.async { [weak self] in self?.onStopRequested?() }
+                // AppKit's terminateLater nested loop must run outside a main-dispatch
+                // callback, otherwise that occupied queue cannot resume the frame-export task.
+                RunLoop.main.perform(inModes: [.default]) { [weak self] in self?.onStopRequested?() }
             }
         }
         catch { model.errorMessage = "无法读取退出请求：\(error.localizedDescription)" }
