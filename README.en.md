@@ -88,6 +88,8 @@ Settings remain in `~/Library/Application Support/VideoWallpaper/` for compatibi
 
 Closing the management window or pressing Command-Q keeps wallpapers, audio, playlists and pause policies running in the independent `WallFlowPlayer`. Reopening management connects to the same player without resetting playback. Use the complete-exit action in Settings or the menu bar to stop both processes and save stills for each display's **current Space only**. Force-quitting the player cannot save them. Relaunch after a complete exit restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
 
+macOS may ask for access to protected folders containing imported wallpapers, including Downloads and Documents. Local ad-hoc re-signing may trigger a new prompt. The user controls this access; denied files cannot be restored for playback.
+
 See [known issues](docs/KNOWN_ISSUES.md), [contribution guidelines](CONTRIBUTING.md), and the [security policy](SECURITY.md). Third-party tools and wallpaper assets retain their own licenses and author permissions.
 
 ## License
