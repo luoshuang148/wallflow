@@ -34,11 +34,12 @@ import WallpaperRuntime
         model = LibraryModel(storeURL: url, mode: .management)
         workshop = WorkshopModel(library: model)
         player = BackgroundPlayerController(stateURL: url)
-        exit = ManagementExitCoordinator(quiesce: { [weak self] in self?.quiesce() }, stop: { [weak self] in
+        exit = ManagementExitCoordinator(quiesce: { [weak self] in self?.quiesce() }, stop: { [weak self] expectedSession in
             guard let self else { throw CancellationError() }
             // A complete exit requested during launch must also stop the helper being launched.
-            await self.startupTask?.value
-            try await self.player.stopAndWait()
+            if expectedSession == nil { await self.startupTask?.value }
+            else { self.startupTask?.cancel() }
+            try await self.player.stopAndWait(expectedSession: expectedSession)
         }, recover: { [weak self] in self?.model.resumeManagementAfterFailedExit() }, terminate: {
             NSApplication.shared.terminate(nil)
         })
@@ -91,7 +92,15 @@ import WallpaperRuntime
         observe(.default, NSApplication.didChangeScreenParametersNotification) { $0.model.refreshDisplays() }
         observe(DistributedNotificationCenter.default(), Notification.Name(SharedStateStore.notification), object: model.storeURL.path) { $0.requestRefresh() }
         observePlayerExit(BackgroundPlayerPaths.stoppingNotification) { $0.quiesce() }
-        observePlayerExit(BackgroundPlayerPaths.stoppedNotification) { _ in NSApplication.shared.terminate(nil) }
+        let center = DistributedNotificationCenter.default()
+        let stopped = center.addObserver(forName: BackgroundPlayerPaths.stoppedNotification, object: model.storeURL.path, queue: .main) { [weak self] notification in
+            let session = (notification.userInfo?["session"] as? String).flatMap(UUID.init(uuidString:))
+            Task { @MainActor in
+                guard let self, let session else { return }
+                await self.exit.playerStopped(session: session, connectedSession: self.connectedSession)
+            }
+        }
+        observers.append((center, stopped))
     }
     private func observePlayerExit(_ name: Notification.Name, action: @escaping @MainActor (AppDelegate) -> Void) {
         let center = DistributedNotificationCenter.default()

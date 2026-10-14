@@ -32,7 +32,9 @@ public enum SharedStateStore {
     private static func merge(base: Any?, next: Any?, current: Any?, path: String) throws -> Any? {
         if equal(base, next) || equal(next, current) { return current }
         if equal(base, current) { return next }
-        if let b = base as? [String: Any], let n = next as? [String: Any], let c = current as? [String: Any] {
+        // A project and its fit mode are one user choice, never a mix of competing choices.
+        let atomicAssignment = path == "设置.defaultAssignment" || path.hasPrefix("设置.assignments.")
+        if !atomicAssignment, let b = base as? [String: Any], let n = next as? [String: Any], let c = current as? [String: Any] {
             var result = c
             for key in Set(b.keys).union(n.keys).union(c.keys) {
                 result[key] = try merge(base: b[key], next: n[key], current: c[key], path: path + "." + key)
