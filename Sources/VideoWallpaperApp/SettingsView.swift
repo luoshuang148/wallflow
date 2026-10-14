@@ -46,7 +46,6 @@ struct SettingsView: View {
             Divider()
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("退出管理程序后，菜单栏图标也会关闭，壁纸继续播放。重新打开 WallFlow 可管理或停止壁纸。")
                     if let error = exit.errorMessage { Text(error).foregroundStyle(.orange).textSelection(.enabled) }
                 }.font(.caption).foregroundStyle(.secondary)
                 Spacer()

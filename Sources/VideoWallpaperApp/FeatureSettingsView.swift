@@ -235,8 +235,6 @@ struct FeatureSettingsView: View {
                 get: { startup.enabled || startup.needsApproval },
                 set: { startup.setEnabled($0) }
             )).toggleStyle(.switch)
-            Text("首次打开默认启用；关闭后会保留你的选择。登录时不会打开管理窗口或显示菜单栏图标。")
-                .font(.callout).foregroundStyle(.secondary)
             if startup.needsApproval {
                 Label("需要在系统设置中允许登录启动", systemImage: "exclamationmark.circle")
                     .foregroundStyle(.orange)
