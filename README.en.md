@@ -8,7 +8,7 @@
 
 A native macOS video wallpaper app built with SwiftUI, AppKit, and AVFoundation. Import complete Wallpaper Engine **video** wallpaper folders, download Workshop videos with SteamCMD, or browse your account's subscribed videos. The application interface is currently in Simplified Chinese.
 
-Current version: **0.7.1 (build 16)**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
+Current development version: **0.8.0 (build 17)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
 
 ## Features
 
@@ -20,6 +20,7 @@ Current version: **0.7.1 (build 16)**. Requires **macOS 14+**. Prebuilt download
 - Pause policies for desktop occlusion, battery power, Low Power Mode, screen lock, and sleep.
 - Per-application mute/pause/stop rules and optional launch at login.
 - Workshop links/IDs, subscription browsing, local scanning, and FFmpeg conversion while retaining source files.
+- Embedded official Workshop browsing with search, filters, sorting, and a “下载此作品” (Download this item) button on eligible video details pages.
 
 Only video wallpapers are supported. Scene, web, and application wallpapers are outside the current scope. WallFlow is an independent application, unaffiliated with Valve, Steam, or Wallpaper Engine.
 
@@ -54,6 +55,8 @@ Applications/
 ```
 
 The macOS SteamCMD tool may require Rosetta on Apple Silicon. Steam's web session and SteamCMD's download session are separate logins. Subscription browsing does not subscribe/unsubscribe or delete local wallpapers.
+
+In development version 0.8.0, **创意工坊 → 浏览工坊…** opens the official website inside the app, initially filtered to Video. It shares the persistent web session used by subscription browsing. A SteamCMD login alone does not log into the webpage. Steam determines which items your account may view; inaccessible/deleted/private items are not guaranteed. The download button rechecks the item and imports supported videos without automatically applying a wallpaper.
 
 ## Build and test
 
