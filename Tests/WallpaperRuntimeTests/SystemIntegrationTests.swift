@@ -26,10 +26,59 @@ import ServiceManagement
 }
 
 final class SystemIntegrationTests: XCTestCase {
+    @MainActor private func preferences() -> UserDefaults {
+        let suite = "wallflow-startup-test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: suite) }
+        return defaults
+    }
+    @MainActor func testDefaultStartupEnablesOnceAndRespectsSavedDisableOnReopen() {
+        let service = SimulatedLoginService(), preferences = preferences()
+        let first = LoginStartupModel(service: service, preferences: preferences)
+        first.configureDefaultIfNeeded()
+        XCTAssertTrue(first.enabled)
+        first.setEnabled(false)
+        XCTAssertFalse(first.enabled)
+        let reopened = LoginStartupModel(service: service, preferences: preferences)
+        reopened.configureDefaultIfNeeded()
+        XCTAssertFalse(reopened.enabled, "Explicit opt-out must survive reopening management")
+        XCTAssertEqual(service.registrations, 1)
+    }
+    @MainActor func testDefaultStartupDoesNotUndoSystemDisable() {
+        let service = SimulatedLoginService(), preferences = preferences()
+        LoginStartupModel(service: service, preferences: preferences).configureDefaultIfNeeded()
+        service.status = .notRegistered
+        let reopened = LoginStartupModel(service: service, preferences: preferences)
+        reopened.configureDefaultIfNeeded()
+        XCTAssertFalse(reopened.enabled)
+        XCTAssertEqual(service.registrations, 1)
+    }
+    @MainActor func testDefaultStartupPendingApprovalIsNotRegisteredAgain() {
+        let service = SimulatedLoginService(), preferences = preferences()
+        service.registrationStatus = .requiresApproval
+        let model = LoginStartupModel(service: service, preferences: preferences)
+        model.configureDefaultIfNeeded()
+        XCTAssertTrue(model.needsApproval)
+        model.configureDefaultIfNeeded()
+        XCTAssertEqual(service.registrations, 1)
+    }
+    @MainActor func testDefaultStartupFailureCanRetryOnNextLaunch() {
+        let service = SimulatedLoginService(), preferences = preferences()
+        service.registrationError = NSError(domain: "LoginTest", code: 1)
+        let first = LoginStartupModel(service: service, preferences: preferences)
+        first.configureDefaultIfNeeded()
+        XCTAssertFalse(first.enabled)
+        XCTAssertNotNil(first.errorMessage)
+        service.registrationError = nil
+        let reopened = LoginStartupModel(service: service, preferences: preferences)
+        reopened.configureDefaultIfNeeded()
+        XCTAssertTrue(reopened.enabled)
+        XCTAssertEqual(service.registrations, 2)
+    }
     @MainActor func testStartupReadsSystemStatusAndRefreshesExternalChanges() {
         let service = SimulatedLoginService()
         service.status = .enabled
-        let model = LoginStartupModel(service: service)
+        let model = LoginStartupModel(service: service, preferences: preferences())
         XCTAssertTrue(model.enabled)
         XCTAssertFalse(model.needsApproval)
         service.status = .requiresApproval
@@ -47,7 +96,7 @@ final class SystemIntegrationTests: XCTestCase {
     @MainActor func testStartupEnableUsesResultingSystemStatusInsteadOfRequestedValue() {
         let service = SimulatedLoginService()
         service.registrationStatus = .requiresApproval
-        let model = LoginStartupModel(service: service)
+        let model = LoginStartupModel(service: service, preferences: preferences())
         model.setEnabled(true)
         XCTAssertFalse(model.enabled)
         XCTAssertTrue(model.needsApproval)
@@ -61,7 +110,7 @@ final class SystemIntegrationTests: XCTestCase {
     @MainActor func testStartupRegistrationFailureRetainsActualStatusAndSurfacesError() {
         let service = SimulatedLoginService()
         service.registrationError = NSError(domain: "LoginTest", code: 1, userInfo: [NSLocalizedDescriptionKey: "Registration denied"])
-        let model = LoginStartupModel(service: service)
+        let model = LoginStartupModel(service: service, preferences: preferences())
         model.setEnabled(true)
         XCTAssertFalse(model.enabled)
         XCTAssertFalse(model.needsApproval)
@@ -78,7 +127,7 @@ final class SystemIntegrationTests: XCTestCase {
         for status: SMAppService.Status in [.enabled, .requiresApproval] {
             let service = SimulatedLoginService()
             service.status = status
-            let model = LoginStartupModel(service: service)
+            let model = LoginStartupModel(service: service, preferences: preferences())
             model.setEnabled(false)
             XCTAssertFalse(model.enabled)
             XCTAssertFalse(model.needsApproval)
@@ -92,7 +141,7 @@ final class SystemIntegrationTests: XCTestCase {
         let service = SimulatedLoginService()
         service.status = .enabled
         service.unregistrationError = NSError(domain: "LoginTest", code: 2, userInfo: [NSLocalizedDescriptionKey: "Removal failed"])
-        let model = LoginStartupModel(service: service)
+        let model = LoginStartupModel(service: service, preferences: preferences())
         model.setEnabled(false)
         XCTAssertTrue(model.enabled)
         XCTAssertTrue(model.errorMessage?.contains("Removal failed") == true)
@@ -101,7 +150,7 @@ final class SystemIntegrationTests: XCTestCase {
     @MainActor func testStartupNotFoundReportsAnActionableError() {
         let service = SimulatedLoginService()
         service.status = .notFound
-        let model = LoginStartupModel(service: service)
+        let model = LoginStartupModel(service: service, preferences: preferences())
         XCTAssertFalse(model.enabled)
         XCTAssertFalse(model.needsApproval)
         XCTAssertNotNil(model.errorMessage)

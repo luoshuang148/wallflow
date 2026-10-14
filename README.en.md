@@ -8,7 +8,7 @@
 
 A native macOS video wallpaper app built with SwiftUI, AppKit, and AVFoundation. Import complete Wallpaper Engine **video** wallpaper folders, download Workshop videos with SteamCMD, or browse your account's subscribed videos. The application interface is currently in Simplified Chinese.
 
-Current development version: **0.9.1 (build 20)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
+Current development version: **0.9.2 (build 21)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
 
 ## Features
 
@@ -86,7 +86,9 @@ Settings remain in `~/Library/Application Support/VideoWallpaper/` for compatibi
 - `Runtime/`: the singleton lease, current-session status, and shutdown request; no account credentials.
 - `ExitWallpapers/`: installed static frames; older frames may still be referenced by other Spaces.
 
-Closing the management window, selecting menu-bar Quit, or pressing Command-Q keeps wallpapers, audio, playlists and pause policies running in the independent `WallFlowPlayer`. Reopening management connects to the same player without resetting playback. Use the complete-exit action in Settings to stop both processes and save stills for each display's **current Space only**. Force-quitting the player cannot save them. Relaunch after a complete exit restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
+Closing the window hides management. Menu-bar Quit and Command-Q quit management and remove its menu-bar icon while wallpapers, audio, playlists and pause policies continue in the independent `WallFlowPlayer`. Reopening WallFlow connects to the same player without resetting playback. Use the complete-exit action in Settings to stop both processes and save stills for each display's **current Space only**. Force-quitting the player cannot save them. Relaunch after a complete exit restores settings without promising the exact previous playback position. Source media is referenced in place; removing a library entry does not delete it, and renaming does not modify the source `project.json`.
+
+Login startup is enabled by default on first launch, with no management window or menu-bar icon after playback starts. Disabling startup in Settings is remembered. macOS may require approval in Login Items.
 
 macOS may ask for access to protected folders containing imported wallpapers, including Downloads and Documents. Local ad-hoc re-signing may trigger a new prompt. The user controls this access; denied files cannot be restored for playback.
 

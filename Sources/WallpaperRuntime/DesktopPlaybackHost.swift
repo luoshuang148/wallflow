@@ -126,15 +126,4 @@ import WallpaperCore
         observers.removeAll()
         try? publishStatus()
     }
-    public func openManagement() {
-        let config = NSWorkspace.OpenConfiguration(); config.activates = true
-        Task {
-            do { _ = try await NSWorkspace.shared.openApplication(at: parentAppURL, configuration: config) }
-            catch { model.errorMessage = "无法打开管理程序：\(error.localizedDescription)" }
-        }
-    }
-    public func quitManagement() {
-        DistributedNotificationCenter.default().postNotificationName(BackgroundPlayerPaths.managementQuitNotification,
-            object: paths.stateURL.path, userInfo: ["session": sessionID.uuidString], deliverImmediately: true)
-    }
 }

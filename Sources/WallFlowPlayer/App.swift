@@ -1,5 +1,4 @@
 import AppKit
-import Combine
 import WallpaperRuntime
 
 @main struct WallFlowPlayerApplication {
@@ -13,12 +12,9 @@ import WallpaperRuntime
     }
 }
 
-@MainActor private final class PlayerDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+@MainActor private final class PlayerDelegate: NSObject, NSApplicationDelegate {
     private var lease: PlayerLease?
     private var host: DesktopPlaybackHost?
-    private var statusItem: NSStatusItem?
-    private var pauseItem: NSMenuItem?
-    private var cancellable: AnyCancellable?
     private var terminationStarted = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -35,7 +31,6 @@ import WallpaperRuntime
                 build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "development", sessionID: acquired.sessionID)
             self.host = host
             host.onStopRequested = { NSApplication.shared.terminate(nil) }
-            setupStatusItem(host)
             Task {
                 do { try await host.start() }
                 catch {
@@ -49,30 +44,6 @@ import WallpaperRuntime
             alert.runModal(); NSApplication.shared.terminate(nil)
         }
     }
-    private func setupStatusItem(_ host: DesktopPlaybackHost) {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem = item
-        let menu = NSMenu(); menu.delegate = self
-        let open = NSMenuItem(title: "管理壁纸…", action: #selector(openManagement), keyEquivalent: ""); open.target = self
-        menu.addItem(open); menu.addItem(.separator())
-        let pause = NSMenuItem(title: "全部暂停", action: #selector(togglePause), keyEquivalent: ""); pause.target = self
-        pauseItem = pause; menu.addItem(pause); menu.addItem(.separator())
-        let quit = NSMenuItem(title: "退出 WallFlow（壁纸继续播放）", action: #selector(quitManagement), keyEquivalent: ""); quit.target = self
-        menu.addItem(quit); item.menu = menu
-        cancellable = host.model.$state.map(\.manuallyPaused).removeDuplicates().sink { [weak self] paused in
-            let image = NSImage(systemSymbolName: paused ? "pause.rectangle" : "play.rectangle", accessibilityDescription: "WallFlow")
-            image?.isTemplate = true
-            self?.statusItem?.button?.image = image
-            self?.statusItem?.button?.toolTip = paused ? "WallFlow · 已暂停" : "WallFlow · 后台播放"
-        }
-    }
-    func menuWillOpen(_ menu: NSMenu) {
-        pauseItem?.title = host?.model.state.manuallyPaused == true ? "恢复播放" : "全部暂停"
-        pauseItem?.isEnabled = host?.phase == .ready && host?.model.state.projects.isEmpty == false
-    }
-    @objc private func openManagement() { host?.openManagement() }
-    @objc private func togglePause() { host?.model.togglePause() }
-    @objc private func quitManagement() { host?.quitManagement() }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let host else { return .terminateNow }
         guard !terminationStarted else { return .terminateLater }
@@ -101,6 +72,5 @@ import WallpaperRuntime
             DistributedNotificationCenter.default().postNotificationName(BackgroundPlayerPaths.stoppedNotification,
                 object: host.paths.stateURL.path, userInfo: ["session": host.sessionID.uuidString], deliverImmediately: true)
         }
-        if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
     }
 }
