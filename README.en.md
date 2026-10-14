@@ -8,7 +8,7 @@
 
 A native macOS video wallpaper app built with SwiftUI, AppKit, and AVFoundation. Import complete Wallpaper Engine **video** wallpaper folders, download Workshop videos with SteamCMD, or browse your account's subscribed videos. The application interface is currently in Simplified Chinese.
 
-Current development version: **0.8.0 (build 17)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
+Current development version: **0.8.0 (build 18)**; the published download remains **0.7.1**. Requires **macOS 14+**. Prebuilt downloads target **Apple Silicon (arm64)**; Intel hardware has not been fully tested.
 
 ## Features
 
@@ -29,7 +29,7 @@ Only video wallpapers are supported. Scene, web, and application wallpapers are 
 1. Download `WallFlow-0.7.1-macOS-arm64.zip` from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest).
 2. Extract the ZIP and move `WallFlow.app` to Applications.
 3. The app is **ad-hoc signed and not notarized**. If macOS blocks it, follow [Apple's instructions](https://support.apple.com/en-us/102445): after trying to open the app, use **System Settings → Privacy & Security → Open Anyway** to confirm an exception for this app.
-4. Under **创意工坊** (Workshop), select **导入壁纸文件夹** (Import wallpaper folder) and choose a complete folder containing `project.json` and its video.
+4. Under **创意工坊 → 其他来源** (Workshop → Other sources), select **导入壁纸文件夹…** (Import wallpaper folder) and choose a complete folder containing `project.json` and its video.
 5. Choose **应用到** (Display), **画面显示** (Fill/Fit), and **声音** (Audio), then apply the wallpaper.
 
 The release includes no wallpapers, SteamCMD, or FFmpeg. Verify the ZIP by placing it beside the release's `SHA256SUMS.txt` and running:
@@ -57,6 +57,8 @@ Applications/
 The macOS SteamCMD tool may require Rosetta on Apple Silicon. Steam's web session and SteamCMD's download session are separate logins. Subscription browsing does not subscribe/unsubscribe or delete local wallpapers.
 
 In development version 0.8.0, **创意工坊 → 浏览工坊…** opens the official website inside the app, initially filtered to Video. It shares the persistent web session used by subscription browsing. A SteamCMD login alone does not log into the webpage. Steam determines which items your account may view; inaccessible/deleted/private items are not guaranteed. The download button rechecks the item and imports supported videos without automatically applying a wallpaper.
+
+Manual link downloads and importing already-downloaded local items are available under **其他来源** (Other sources). Browsing and subscription reading are the primary actions.
 
 ## Build and test
 

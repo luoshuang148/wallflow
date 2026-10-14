@@ -11,6 +11,7 @@ struct WorkshopView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showsSubscriptions = false
     @State private var showsBrowser = false
+    @State private var showsLinkDownload = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -21,10 +22,19 @@ struct WorkshopView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack {
-                        Button(action:onImportFolder) { Label("导入壁纸文件夹",systemImage:"folder.badge.plus") }
-                            .controlSize(.large).disabled(model.isBusy || library.isBusy)
+                        Button { showsBrowser = true } label: { Label("浏览工坊…", systemImage: "globe") }
+                            .buttonStyle(.borderedProminent)
+                        Button { showsSubscriptions = true } label: { Label("读取 Steam 订阅…", systemImage: "person.crop.circle.badge.checkmark") }
                         Spacer()
-                    }
+                        Menu("其他来源") {
+                            Button("导入壁纸文件夹…", action: onImportFolder)
+                            Button("通过链接下载…") { showsLinkDownload = true }
+                            Button("导入本机已下载") { model.scanLocal() }
+                            Divider()
+                            Button("选择 Steam 视频目录…", action: chooseLocal)
+                            Button("读取 Windows 已下载清单…", action: chooseManifest)
+                        }.frame(width: 120)
+                    }.disabled(model.isBusy || library.isBusy)
                     GroupBox("下载账号") {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
@@ -46,23 +56,6 @@ struct WorkshopView: View {
                             }
                         }.padding(8)
                     }
-                    GroupBox("通过链接下载") {
-                        HStack {
-                            TextField("粘贴 Steam 创意工坊链接或数字编号", text: $model.input).textFieldStyle(.roundedBorder)
-                                .onSubmit { model.downloadInput() }
-                            Button("下载并导入") { model.downloadInput() }.disabled(model.isBusy || library.isBusy || model.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }.padding(8)
-                    }
-                    HStack {
-                        Button { showsBrowser = true } label: { Label("浏览工坊…", systemImage: "globe") }
-                        Button { showsSubscriptions = true } label: { Label("读取 Steam 订阅…", systemImage: "person.crop.circle.badge.checkmark") }
-                        Button("导入本机已下载") { model.scanLocal() }
-                        Menu("其他来源") {
-                            Button("选择 Steam 视频目录…", action: chooseLocal)
-                            Button("读取 Windows 已下载清单…", action: chooseManifest)
-                        }.frame(width: 120)
-                        Spacer()
-                    }.disabled(model.isBusy || library.isBusy)
                     if !model.candidates.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
@@ -116,6 +109,7 @@ struct WorkshopView: View {
             SubscriptionView { ids in model.loadSubscriptions(ids); showsSubscriptions = false }
         }
         .sheet(isPresented: $showsBrowser) { WorkshopBrowserView(model: model, library: library) }
+        .sheet(isPresented: $showsLinkDownload) { WorkshopLinkDownloadView(model: model, library: library) }
     }
     private func chooseTool() {
         let panel = NSOpenPanel(); panel.title = "选择 SteamCMD 可执行文件 steamcmd"; panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
@@ -128,6 +122,53 @@ struct WorkshopView: View {
     private func chooseManifest() {
         let panel = NSOpenPanel(); panel.title = "选择 Windows 的 appworkshop_431960.acf"; panel.canChooseDirectories = false
         if panel.runModal() == .OK, let url = panel.url { model.loadManifest(url) }
+    }
+}
+
+private struct WorkshopLinkDownloadView: View {
+    @ObservedObject var model: WorkshopModel
+    @ObservedObject var library: LibraryModel
+    @Environment(\.dismiss) private var dismiss
+    private var isBusy: Bool { model.isBusy || library.isBusy }
+    private var canDownload: Bool { !isBusy && !model.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("通过链接下载").font(.title2.bold())
+                Spacer()
+                Button("关闭") { dismiss() }.keyboardShortcut(.cancelAction)
+            }
+            HStack {
+                TextField("粘贴 Steam 创意工坊链接或数字编号", text: $model.input)
+                    .textFieldStyle(.roundedBorder).disabled(isBusy)
+                    .onSubmit { if canDownload { model.downloadInput() } }
+                Button("下载并导入") { model.downloadInput() }
+                    .buttonStyle(.borderedProminent).disabled(!canDownload)
+            }
+            if let error = model.errorMessage ?? library.errorMessage {
+                Text(error).font(.callout).foregroundStyle(.orange).textSelection(.enabled)
+            }
+            if !model.failures.isEmpty {
+                DisclosureGroup("\(model.failures.count) 项未完成，展开查看原因") {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(Array(model.failures.enumerated()), id: \.offset) { _, failure in
+                                Text(failure).font(.caption).textSelection(.enabled)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }.frame(maxHeight: 100)
+                }
+            }
+            Divider()
+            HStack {
+                if isBusy { ProgressView().controlSize(.small) }
+                Text(library.importStatus ?? (library.isBusy ? "正在导入…" : model.status))
+                    .font(.callout).lineLimit(3).textSelection(.enabled)
+                Spacer()
+                if model.isBusy { Button("取消任务") { model.cancel() } }
+            }
+            if model.isBusy, model.total > 0 { ProgressView(value: Double(model.completed), total: Double(model.total)) }
+        }.padding(24).frame(width: 620)
     }
 }
 
