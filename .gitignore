@@ -44,6 +44,10 @@ logs/
 userdata/
 *.log
 
+# Development process artifacts (kept local only)
+docs/superpowers/
+*.prompt.txt
+
 # Credentials and signing material
 .env
 .env.*
