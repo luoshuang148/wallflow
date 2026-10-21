@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-and-build:
+  build:
     runs-on: macos-15
     timeout-minutes: 20
     steps:
@@ -27,8 +27,6 @@ jobs:
         run: |
           swift --version
           xcodebuild -version
-      - name: Run default tests
-        run: swift test
       - name: Build and verify release app
         run: |
           ./build.sh

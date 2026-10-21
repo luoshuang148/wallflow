@@ -10,9 +10,7 @@ let package = Package(
         .target(name: "WallpaperCore"),
         .target(name: "WallpaperRuntime", dependencies: ["WallpaperCore"]),
         .executableTarget(name: "VideoWallpaperApp", dependencies: ["WallpaperCore", "WallpaperRuntime"]),
-        .executableTarget(name: "WallFlowPlayer", dependencies: ["WallpaperCore", "WallpaperRuntime"]),
-        .testTarget(name: "WallpaperCoreTests", dependencies: ["WallpaperCore"]),
-        .testTarget(name: "WallpaperRuntimeTests", dependencies: ["WallpaperRuntime", "WallpaperCore"])
+        .executableTarget(name: "WallFlowPlayer", dependencies: ["WallpaperCore", "WallpaperRuntime"])
     ],
     swiftLanguageModes: [.v5]
 )

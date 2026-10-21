@@ -100,7 +100,7 @@ cd wallflow
 open dist/WallFlow.app
 ```
 
-开发与测试命令、模块说明、可选集成测试和构建参数见[开发指南](docs/DEVELOPMENT.md)。CI 会运行默认测试、构建和签名检查；涉及个人媒体、Steam 账号或图形会话的测试可能跳过。
+开发与模块说明、构建参数见[开发指南](docs/DEVELOPMENT.md)。CI 会构建应用并做签名检查。
 
 ## 参与项目
 

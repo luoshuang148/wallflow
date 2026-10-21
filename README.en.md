@@ -100,7 +100,7 @@ cd wallflow
 open dist/WallFlow.app
 ```
 
-See the [development guide](docs/DEVELOPMENT.md) for the code map, test commands, optional integrations, and build options. CI runs default tests, builds the app, and verifies signing. Tests needing personal media, Steam accounts, or a graphical session may be skipped.
+See the [development guide](docs/DEVELOPMENT.md) for the code map and build options. CI builds the app and verifies signing.
 
 ## Contribute
 

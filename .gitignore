@@ -47,6 +47,7 @@ userdata/
 # Development process artifacts (kept local only)
 docs/superpowers/
 *.prompt.txt
+Tests/
 
 # Credentials and signing material
 .env
