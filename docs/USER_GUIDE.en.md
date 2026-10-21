@@ -6,11 +6,11 @@ Installation and menu paths below describe the published **0.9.3 (build 22)** ap
 
 ## Installation and updates
 
-Download `WallFlow-0.9.3-macOS-arm64.zip` from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest), extract it, and move `WallFlow.app` to Applications. Requires macOS 14+ and Apple Silicon. Intel has no prebuilt download and has not been fully tested.
+Download `WallFlow-0.9.3-macOS-arm64.dmg` (or the same-named `.zip`) from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest). Open the DMG and move `WallFlow.app` to Applications. For the ZIP, extract it first. Requires macOS 14+ and Apple Silicon. Intel has no prebuilt download and has not been fully tested.
 
 The app is ad-hoc signed, without Developer ID signing or notarization. If macOS blocks it, try opening it first, then follow [Apple's instructions](https://support.apple.com/en-us/102445) under System Settings → Privacy & Security → Open Anyway. The release includes no wallpapers, SteamCMD, or FFmpeg.
 
-Place `SHA256SUMS.txt` beside the ZIP and check integrity with:
+Place `SHA256SUMS.txt` beside the DMG or ZIP and check integrity with:
 
 ```bash
 shasum -a 256 -c SHA256SUMS.txt

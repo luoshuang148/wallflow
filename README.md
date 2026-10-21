@@ -46,8 +46,8 @@ WallFlow 适合希望在 Mac 上播放视频壁纸、管理自己的壁纸库，
 
 ## 下载安装
 
-1. 前往 [Releases](https://github.com/luoshuang148/wallflow/releases/latest)，下载 `WallFlow-0.9.3-macOS-arm64.zip`。
-2. 解压，将 `WallFlow.app` 拖入 **应用程序** 文件夹，再打开。
+1. 前往 [Releases](https://github.com/luoshuang148/wallflow/releases/latest)，下载 `WallFlow-0.9.3-macOS-arm64.dmg`（或同名 `.zip`）。
+2. 打开 DMG，将 `WallFlow.app` 拖入 **应用程序** 文件夹，再打开；使用 ZIP 时先解压再拖入。
 3. 如果 macOS 阻止打开，在尝试打开后前往 **系统设置 → 隐私与安全性 → 仍要打开**。请按 [Apple 官方说明](https://support.apple.com/zh-cn/102445)确认该应用的例外。
 
 发布包使用本地 ad-hoc 签名，尚无 Developer ID 签名和 Apple 公证。Intel Mac 暂无预编译安装包，也尚未在真机完整验证。安装包不包含壁纸、SteamCMD 或 FFmpeg。
@@ -55,7 +55,7 @@ WallFlow 适合希望在 Mac 上播放视频壁纸、管理自己的壁纸库，
 <details>
 <summary>校验下载与更新已有安装</summary>
 
-将 Release 的 `SHA256SUMS.txt` 和 ZIP 放在同一目录，然后运行：
+将 Release 的 `SHA256SUMS.txt` 和 DMG/ZIP 放在同一目录，然后运行：
 
 ```bash
 shasum -a 256 -c SHA256SUMS.txt

@@ -6,14 +6,14 @@
 
 ## 下载安装
 
-1. 从 [最新 Release](https://github.com/luoshuang148/wallflow/releases/latest) 下载 `WallFlow-0.9.3-macOS-arm64.zip`，适用于 macOS 14+ 的 Apple Silicon Mac。
-2. 解压后将 `WallFlow.app` 拖入“应用程序”，再打开应用。
+1. 从 [最新 Release](https://github.com/luoshuang148/wallflow/releases/latest) 下载 `WallFlow-0.9.3-macOS-arm64.dmg`（或同名 `.zip`），适用于 macOS 14+ 的 Apple Silicon Mac。
+2. 打开 DMG，将 `WallFlow.app` 拖入“应用程序”，再打开应用；使用 ZIP 时先解压再拖入。
 3. 若 macOS 阻止打开，请按 [Apple 的说明](https://support.apple.com/zh-cn/102445)，在尝试打开后到 **系统设置 → 隐私与安全性 → 仍要打开** 为该应用确认例外。
 4. 导入自己的完整视频壁纸文件夹即可使用；下载创意工坊作品或转换视频时，再配置下方的可选工具。
 
 发布包使用本地 ad-hoc 签名，**尚无 Developer ID 签名和 Apple 公证**。Intel Mac 暂无预编译下载，源码构建也尚未在 Intel 真机完整验证。发布包不包含壁纸、SteamCMD 或 FFmpeg。
 
-Release 附带 `SHA256SUMS.txt`。把它和 ZIP 放在同一目录，可核对下载完整性：
+Release 附带 `SHA256SUMS.txt`。把它和 DMG/ZIP 放在同一目录，可核对下载完整性：
 
 ```bash
 shasum -a 256 -c SHA256SUMS.txt
