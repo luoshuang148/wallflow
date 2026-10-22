@@ -89,6 +89,10 @@ WallFlow 引用原视频文件，请保留导入文件夹。从壁纸库移除�
 
 **遇到播放、转换或安装问题怎么办？** 先查看[使用指南](docs/USER_GUIDE.md#常见问题)和[已知问题](docs/KNOWN_ISSUES.md)，仍有问题可用[问题模板](https://github.com/luoshuang148/wallflow/issues/new/choose)提交复现步骤。[获取帮助](SUPPORT.md)
 
+## 源码本地化状态
+
+当前源码已加入简体中文和英文本地化资源，并通过资源完整性与构建检查；**公开 0.9.3 安装包仍只有中文界面**。本轮未进行中英界面的实机视觉验收，发布英文安装包前还需检查完整流程。见[本地化验证说明](docs/LOCALIZATION.md)。
+
 ## 从源码构建
 
 需要 macOS 14+ 和支持 Swift 6 的 Xcode 工具链：

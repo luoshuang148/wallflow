@@ -89,6 +89,10 @@ The [user guide](docs/USER_GUIDE.en.md) covers tool setup, playlists, power poli
 
 **Having trouble installing, playing, or converting?** Check the [user guide](docs/USER_GUIDE.en.md#troubleshooting) and [known issues](docs/KNOWN_ISSUES.md), then submit reproduction steps using the [issue forms](https://github.com/luoshuang148/wallflow/issues/new/choose). [Get help](SUPPORT.md)
 
+## Source localization status
+
+The source now includes Simplified Chinese and English localization tables, with resource checks and compilation completed. The public **0.9.3 package still has a Chinese-only interface**. Live visual acceptance of both languages remains pending before an English binary release. See [localization verification](docs/LOCALIZATION.md).
+
 ## Build from source
 
 Use a Swift 6-capable Xcode toolchain on macOS 14+:
