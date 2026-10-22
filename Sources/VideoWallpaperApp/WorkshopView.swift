@@ -15,54 +15,54 @@ struct WorkshopView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("创意工坊").font(.title2.bold())
+                Text(L("library.workshop")).font(.title2.bold())
                 Spacer()
-                Button("完成") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(L("settings.done")) { dismiss() }.keyboardShortcut(.cancelAction)
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack {
-                        Button { showsBrowser = true } label: { Label("浏览工坊…", systemImage: "globe") }
+                        Button { showsBrowser = true } label: { Label(L("workshop.browseWorkshop"), systemImage: "globe") }
                             .buttonStyle(.borderedProminent)
-                        Button { showsSubscriptions = true } label: { Label("读取 Steam 订阅…", systemImage: "person.crop.circle.badge.checkmark") }
+                        Button { showsSubscriptions = true } label: { Label(L("workshop.readSteamSubscriptions"), systemImage: "person.crop.circle.badge.checkmark") }
                         Spacer()
-                        Menu("其他来源") {
-                            Button("导入壁纸文件夹…", action: onImportFolder)
-                            Button("通过链接下载…") { showsLinkDownload = true }
-                            Button("导入本机已下载") { model.scanLocal() }
+                        Menu(L("workshop.otherSources")) {
+                            Button(L("workshop.importWallpaperFolder"), action: onImportFolder)
+                            Button(L("workshop.downloadFromLink")) { showsLinkDownload = true }
+                            Button(L("workshop.importLocalDownloads")) { model.scanLocal() }
                             Divider()
-                            Button("选择 Steam 视频目录…", action: chooseLocal)
-                            Button("读取 Windows 已下载清单…", action: chooseManifest)
+                            Button(L("workshop.selectSteamVideoFolder"), action: chooseLocal)
+                            Button(L("workshop.readWindowsDownloadManifest"), action: chooseManifest)
                         }.frame(width: 120)
                     }.disabled(model.isBusy || library.isBusy)
-                    GroupBox("下载账号") {
+                    GroupBox(L("workshop.downloadAccount")) {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
-                                TextField("Steam 登录账号名", text: $model.account).textFieldStyle(.roundedBorder)
+                                TextField(L("workshop.steamLoginAccountName"), text: $model.account).textFieldStyle(.roundedBorder)
                                     .onSubmit { model.savePreferences() }
                                 if !model.accounts.isEmpty {
-                                    Menu("已登录账号") {
+                                    Menu(L("workshop.signedInAccounts")) {
                                         ForEach(model.accounts, id: \.self) { name in Button(name) { model.account = name; model.savePreferences() } }
                                     }.frame(width: 120)
                                 }
-                                Button("登录下载账号") { model.loginInTerminal() }
-                                    .help("账号须拥有 Wallpaper Engine；在终端完成 Steam 登录与 Steam Guard 验证。")
+                                Button(L("workshop.signInToDownload")) { model.loginInTerminal() }
+                                    .help(L("workshop.theAccountMustOwnWallpaperEngineCompleteSteam"))
                             }.disabled(model.isBusy || library.isBusy)
                             HStack {
                                 Image(systemName: model.tool == nil ? "exclamationmark.triangle" : "checkmark.circle").foregroundStyle(model.tool == nil ? .orange : .secondary)
-                                Text(model.tool == nil ? "尚未找到 SteamCMD" : "SteamCMD 已就绪").font(.caption)
+                                Text(model.tool == nil ? L("workshop.steamcmdNotFound") : L("workshop.steamcmdReady")).font(.caption)
                                 Spacer()
-                                Button("选择工具…", action: chooseTool).controlSize(.small).disabled(model.isBusy || library.isBusy)
+                                Button(L("workshop.chooseTool"), action: chooseTool).controlSize(.small).disabled(model.isBusy || library.isBusy)
                             }
                         }.padding(8)
                     }
                     if !model.candidates.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
-                                Text("视频壁纸 · \(model.candidates.count)").font(.headline)
+                                Text(String(format: L("workshop.videoWallpapers"), String(describing: model.candidates.count))).font(.headline)
                                 Spacer()
-                                Button("全选未导入") { model.selected = Set(model.candidates.filter { !model.alreadyImported($0.id) }.map(\.id)) }
-                                Button("取消全选") { model.selected = [] }
+                                Button(L("workshop.selectAllNotImported")) { model.selected = Set(model.candidates.filter { !model.alreadyImported($0.id) }.map(\.id)) }
+                                Button(L("workshop.deselectAll")) { model.selected = [] }
                             }.disabled(model.isBusy || library.isBusy)
                             ScrollView {
                                 LazyVStack(alignment: .leading, spacing: 10) {
@@ -75,22 +75,22 @@ struct WorkshopView: View {
                                                 }
                                             }.toggleStyle(.checkbox).disabled(model.isBusy || library.isBusy || model.alreadyImported(item.id))
                                             Spacer()
-                                            if model.alreadyImported(item.id) { Text("已导入").font(.caption).foregroundStyle(.secondary) }
-                                            Link("详情", destination: item.id.url).font(.caption)
+                                            if model.alreadyImported(item.id) { Text(L("workshop.imported")).font(.caption).foregroundStyle(.secondary) }
+                                            Link(L("workshop.details"), destination: item.id.url).font(.caption)
                                         }
                                     }
                                 }.padding(12)
                             }.frame(height: 200).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
                             HStack {
-                                Text("已选 \(model.selected.count) 个 · 约 \(ByteCountFormatter.string(fromByteCount: model.selectedBytes, countStyle: .file))").font(.callout).foregroundStyle(.secondary)
+                                Text(String(format: L("workshop.selectedAbout"), String(describing: model.selected.count), String(describing: ByteCountFormatter.string(fromByteCount: model.selectedBytes, countStyle: .file)))).font(.callout).foregroundStyle(.secondary)
                                 Spacer()
-                                Button("下载所选视频") { model.downloadSelected() }.buttonStyle(.borderedProminent).disabled(model.isBusy || library.isBusy || model.selected.isEmpty)
+                                Button(L("workshop.downloadSelectedVideos")) { model.downloadSelected() }.buttonStyle(.borderedProminent).disabled(model.isBusy || library.isBusy || model.selected.isEmpty)
                             }
                         }
                     }
                     if let error = model.errorMessage ?? library.errorMessage { Text(error).foregroundStyle(.orange).textSelection(.enabled) }
                     if !model.failures.isEmpty {
-                        DisclosureGroup("\(model.failures.count) 项未完成，展开查看原因") {
+                        DisclosureGroup(String(format: L("workshop.browser.itemsIncompleteExpandForDetails"), String(describing: model.failures.count))) {
                             VStack(alignment: .leading, spacing: 8) { ForEach(Array(model.failures.enumerated()), id: \.offset) { _, failure in Text(failure).font(.caption).textSelection(.enabled) } }.padding(.top, 8)
                         }
                     }
@@ -99,9 +99,9 @@ struct WorkshopView: View {
             Divider()
             HStack {
                 if model.isBusy || library.isBusy { ProgressView().controlSize(.small) }
-                Text(library.importStatus ?? (library.isBusy ? "正在导入…" : model.status)).font(.callout).lineLimit(3).textSelection(.enabled)
+                Text(library.importStatus ?? (library.isBusy ? L("workshop.importing") : model.status)).font(.callout).lineLimit(3).textSelection(.enabled)
                 Spacer()
-                if model.isBusy { Button("取消任务") { model.cancel() } }
+                if model.isBusy { Button(L("workshop.browser.cancelTask")) { model.cancel() } }
             }
             if model.isBusy && model.total > 0 { ProgressView(value: Double(model.completed), total: Double(model.total)) }
         }.padding(24).frame(width: 780, height: 660).onAppear { model.refreshAccounts() }
@@ -112,15 +112,15 @@ struct WorkshopView: View {
         .sheet(isPresented: $showsLinkDownload) { WorkshopLinkDownloadView(model: model, library: library) }
     }
     private func chooseTool() {
-        let panel = NSOpenPanel(); panel.title = "选择 SteamCMD 可执行文件 steamcmd"; panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
+        let panel = NSOpenPanel(); panel.title = L("workshop.selectTheSteamCMDExecutableSteamcmd"); panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url { model.chooseTool(url) }
     }
     private func chooseLocal() {
-        let panel = NSOpenPanel(); panel.title = "选择 content/431960 目录（内含数字壁纸文件夹）"; panel.canChooseDirectories = true; panel.canChooseFiles = false
+        let panel = NSOpenPanel(); panel.title = L("workshop.selectContent431960ContainingNumberedWallpaperFolders"); panel.canChooseDirectories = true; panel.canChooseFiles = false
         if panel.runModal() == .OK, let url = panel.url { model.scanLocal(url) }
     }
     private func chooseManifest() {
-        let panel = NSOpenPanel(); panel.title = "选择 Windows 的 appworkshop_431960.acf"; panel.canChooseDirectories = false
+        let panel = NSOpenPanel(); panel.title = L("workshop.selectWindowsAppworkshop431960Acf"); panel.canChooseDirectories = false
         if panel.runModal() == .OK, let url = panel.url { model.loadManifest(url) }
     }
 }
@@ -134,22 +134,22 @@ private struct WorkshopLinkDownloadView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("通过链接下载").font(.title2.bold())
+                Text(L("workshop.downloadFromLinkTitle")).font(.title2.bold())
                 Spacer()
-                Button("关闭") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(L("workshop.browser.close")) { dismiss() }.keyboardShortcut(.cancelAction)
             }
             HStack {
-                TextField("粘贴 Steam 创意工坊链接或数字编号", text: $model.input)
+                TextField(L("workshop.pasteASteamWorkshopLinkOrNumericID"), text: $model.input)
                     .textFieldStyle(.roundedBorder).disabled(isBusy)
                     .onSubmit { if canDownload { model.downloadInput() } }
-                Button("下载并导入") { model.downloadInput() }
+                Button(L("workshop.downloadAndImport")) { model.downloadInput() }
                     .buttonStyle(.borderedProminent).disabled(!canDownload)
             }
             if let error = model.errorMessage ?? library.errorMessage {
                 Text(error).font(.callout).foregroundStyle(.orange).textSelection(.enabled)
             }
             if !model.failures.isEmpty {
-                DisclosureGroup("\(model.failures.count) 项未完成，展开查看原因") {
+                DisclosureGroup(String(format: L("workshop.browser.itemsIncompleteExpandForDetails"), String(describing: model.failures.count))) {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(Array(model.failures.enumerated()), id: \.offset) { _, failure in
@@ -162,10 +162,10 @@ private struct WorkshopLinkDownloadView: View {
             Divider()
             HStack {
                 if isBusy { ProgressView().controlSize(.small) }
-                Text(library.importStatus ?? (library.isBusy ? "正在导入…" : model.status))
+                Text(library.importStatus ?? (library.isBusy ? L("workshop.importing") : model.status))
                     .font(.callout).lineLimit(3).textSelection(.enabled)
                 Spacer()
-                if model.isBusy { Button("取消任务") { model.cancel() } }
+                if model.isBusy { Button(L("workshop.browser.cancelTask")) { model.cancel() } }
             }
             if model.isBusy, model.total > 0 { ProgressView(value: Double(model.completed), total: Double(model.total)) }
         }.padding(24).frame(width: 620)
@@ -184,11 +184,11 @@ private struct SubscriptionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Steam 账号订阅").font(.title2.bold())
+                Text(L("workshop.steamAccountSubscriptions")).font(.title2.bold())
                 Spacer()
-                Button(browser.isReading ? "取消读取" : "关闭") { browser.cancel(); dismiss() }
+                Button(browser.isReading ? L("workshop.cancelReading") : L("workshop.browser.close")) { browser.cancel(); dismiss() }
             }
-            Text("Steam 网页与下载账号需分别登录。").font(.callout).foregroundStyle(.secondary)
+            Text(L("workshop.signInToTheSteamWebsiteAndThe")).font(.callout).foregroundStyle(.secondary)
             HStack {
                 Image(systemName: "lock.fill").foregroundStyle(.secondary)
                 Text(browser.address).font(.caption).lineLimit(1).textSelection(.enabled)
@@ -199,8 +199,8 @@ private struct SubscriptionView: View {
                 if browser.isReading { ProgressView().controlSize(.small) }
                 Text(browser.status).font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button("回到我的订阅") { browser.goHome() }.disabled(browser.isReading)
-                Button("读取全部订阅") { browser.readAll(completion: onRead) }.buttonStyle(.borderedProminent).disabled(browser.isReading)
+                Button(L("workshop.backToMySubscriptions")) { browser.goHome() }.disabled(browser.isReading)
+                Button(L("workshop.readAllSubscriptions")) { browser.readAll(completion: onRead) }.buttonStyle(.borderedProminent).disabled(browser.isReading)
             }
         }.padding(20).frame(width: 880, height: 700).onDisappear { browser.cancel() }
     }

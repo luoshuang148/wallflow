@@ -88,7 +88,7 @@ private final class ProcessControl: @unchecked Sendable {
         let wasCancelled = cancelled; let wasExpired = expired
         lock.unlock()
         try? pipe.fileHandleForReading.close()
-        if wasExpired { throw WallpaperError.message("Steam 操作超时，已停止进程。请检查网络后重试。") }
+        if wasExpired { throw WallpaperError.message(L("error.steam.theSteamOperationTimedOutAndWasStopped")) }
         if wasCancelled { throw CancellationError() }
         return SteamProcessResult(exitCode: p.terminationStatus, output: String(decoding: output, as: UTF8.self))
     }

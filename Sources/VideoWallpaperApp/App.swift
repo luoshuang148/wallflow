@@ -82,10 +82,10 @@ import WallpaperRuntime
     private func setupMainMenu() {
         let menu = NSMenu()
         let appItem = NSMenuItem(), appMenu = NSMenu()
-        let quit = NSMenuItem(title: "退出 WallFlow", action: #selector(quit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: L("menu.quitWallFlow"), action: #selector(quit), keyEquivalent: "q")
         quit.target = self; appMenu.addItem(quit); appItem.submenu = appMenu; menu.addItem(appItem)
-        let editItem = NSMenuItem(title: "编辑", action: nil, keyEquivalent: ""), edit = NSMenu(title: "编辑")
-        for (title, action, key) in [("剪切", "cut:", "x"), ("复制", "copy:", "c"), ("粘贴", "paste:", "v"), ("全选", "selectAll:", "a")] {
+        let editItem = NSMenuItem(title: L("menu.edit"), action: nil, keyEquivalent: ""), edit = NSMenu(title: L("menu.edit"))
+        for (title, action, key) in [(L("menu.cut"), "cut:", "x"), (L("menu.copy"), "copy:", "c"), (L("menu.paste"), "paste:", "v"), (L("menu.selectAll"), "selectAll:", "a")] {
             edit.addItem(NSMenuItem(title: title, action: Selector(action), keyEquivalent: key))
         }
         editItem.submenu = edit; menu.addItem(editItem)
@@ -95,21 +95,21 @@ import WallpaperRuntime
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem = item
         let menu = NSMenu(); menu.delegate = self
-        let open = NSMenuItem(title: "管理壁纸…", action: #selector(showLibrary), keyEquivalent: ""); open.target = self
+        let open = NSMenuItem(title: L("menu.manageWallpapers"), action: #selector(showLibrary), keyEquivalent: ""); open.target = self
         menu.addItem(open); menu.addItem(.separator())
-        let pause = NSMenuItem(title: "全部暂停", action: #selector(togglePause), keyEquivalent: ""); pause.target = self
+        let pause = NSMenuItem(title: L("menu.pauseAll"), action: #selector(togglePause), keyEquivalent: ""); pause.target = self
         pauseItem = pause; menu.addItem(pause); menu.addItem(.separator())
-        let quit = NSMenuItem(title: "退出 WallFlow", action: #selector(quit), keyEquivalent: ""); quit.target = self
+        let quit = NSMenuItem(title: L("menu.quitWallFlow"), action: #selector(quit), keyEquivalent: ""); quit.target = self
         menu.addItem(quit); item.menu = menu
         cancellable = model.$state.map(\.manuallyPaused).removeDuplicates().sink { [weak self] paused in
             let image = NSImage(systemSymbolName: paused ? "pause.rectangle" : "play.rectangle", accessibilityDescription: "WallFlow")
             image?.isTemplate = true
             self?.statusItem?.button?.image = image
-            self?.statusItem?.button?.toolTip = paused ? "WallFlow · 已暂停" : "WallFlow"
+            self?.statusItem?.button?.toolTip = paused ? L("menu.wallflowPaused") : "WallFlow"
         }
     }
     func menuWillOpen(_ menu: NSMenu) {
-        pauseItem?.title = model.state.manuallyPaused ? "恢复播放" : "全部暂停"
+        pauseItem?.title = model.state.manuallyPaused ? L("menu.resumePlayback") : L("menu.pauseAll")
         pauseItem?.isEnabled = !model.state.projects.isEmpty
     }
     @objc private func togglePause() { model.togglePause() }

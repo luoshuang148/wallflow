@@ -58,3 +58,6 @@ Tests/
 *.mobileprovision
 credentials*
 secrets*
+
+# Generated original demo wallpapers; keep out of Git
+demo/

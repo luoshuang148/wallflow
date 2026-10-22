@@ -1,3 +1,4 @@
+import WallpaperCore
 import AppKit
 import WallpaperRuntime
 
@@ -35,13 +36,13 @@ import WallpaperRuntime
             Task {
                 do { try await host.start() }
                 catch {
-                    let alert = NSAlert(); alert.messageText = "后台播放器无法启动"; alert.informativeText = error.localizedDescription
+                    let alert = NSAlert(); alert.messageText = L("menu.backgroundPlayerCouldNotStart"); alert.informativeText = error.localizedDescription
                     alert.runModal()
                     NSApplication.shared.terminate(nil)
                 }
             }
         } catch {
-            let alert = NSAlert(); alert.messageText = "后台播放器无法启动"; alert.informativeText = error.localizedDescription
+            let alert = NSAlert(); alert.messageText = L("menu.backgroundPlayerCouldNotStart"); alert.informativeText = error.localizedDescription
             alert.runModal(); NSApplication.shared.terminate(nil)
         }
     }
@@ -56,9 +57,9 @@ import WallpaperRuntime
                 let errors = await keeper.preserve(wallpapers)
                 if errors.isEmpty { break }
                 let alert = NSAlert()
-                alert.messageText = "无法保留部分屏幕的壁纸"
+                alert.messageText = L("menu.couldNotPreserveWallpapersOnSomeDisplays")
                 alert.informativeText = errors.joined(separator: "\n")
-                alert.addButton(withTitle: "重试"); alert.addButton(withTitle: "仍然退出")
+                alert.addButton(withTitle: L("menu.retry")); alert.addButton(withTitle: L("menu.quitAnyway"))
                 sender.activate(ignoringOtherApps: true)
                 if alert.runModal() != .alertFirstButtonReturn { break }
             }

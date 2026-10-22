@@ -41,14 +41,14 @@ public struct ExitWallpaper {
                 // cannot enumerate those references, so retain every installed image.
             } catch {
                 if let exported { try? FileManager.default.removeItem(at: exported) }
-                errors.append("\(wallpaper.display.name)：\(error.localizedDescription)")
+                errors.append(String(format: L("error.preserve.displayFailure"), wallpaper.display.name, error.localizedDescription))
             }
         }
         return errors
     }
     private func export(_ wallpaper: ExitWallpaper) async throws -> URL {
         guard FileManager.default.isReadableFile(atPath: wallpaper.videoURL.path) else {
-            throw WallpaperError.message("找不到壁纸视频。")
+            throw WallpaperError.message(L("error.preserve.wallpaperVideoNotFound"))
         }
         let generator = AVAssetImageGenerator(asset: AVURLAsset(url: wallpaper.videoURL))
         generator.appliesPreferredTrackTransform = true
@@ -70,7 +70,7 @@ public struct ExitWallpaper {
             group.addTask {
                 try await Task.sleep(for:.seconds(5))
                 generator.cancelAllCGImageGeneration()
-                throw WallpaperError.message("保存壁纸画面超时。")
+                throw WallpaperError.message(L("error.preserve.savingTheWallpaperFrameTimedOut"))
             }
             defer { group.cancelAll(); generator.cancelAllCGImageGeneration() }
             return try await group.next()!
@@ -78,12 +78,12 @@ public struct ExitWallpaper {
         try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
         let url = directory.appendingPathComponent("wallflow-\(UUID().uuidString).png")
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL,UTType.png.identifier as CFString,1,nil) else {
-            throw WallpaperError.message("无法保存壁纸画面。")
+            throw WallpaperError.message(L("error.preserve.couldNotSaveTheWallpaperFrame"))
         }
         CGImageDestinationAddImage(destination,image,nil)
         guard CGImageDestinationFinalize(destination) else {
             try? FileManager.default.removeItem(at:url)
-            throw WallpaperError.message("保存壁纸画面失败。")
+            throw WallpaperError.message(L("error.preserve.failedToSaveTheWallpaperFrame"))
         }
         return url
     }

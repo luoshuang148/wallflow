@@ -32,7 +32,7 @@ public enum SteamPaths {
     }
     public static func validateAccount(_ name: String) throws {
         guard name.range(of: "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$", options: .regularExpression) != nil else {
-            throw WallpaperError.message("请输入 Steam 登录账号名（不是昵称或邮箱）。")
+            throw WallpaperError.message(L("error.steam.enterYourSteamLoginAccountNameNotYour"))
         }
     }
     public static func environment(tool: URL) -> [String: String] {
@@ -45,7 +45,7 @@ public enum SteamPaths {
         let canonical = folder.resolvingSymlinksInPath().standardizedFileURL
         guard roots.contains(where: { root in
             canonical == root.resolvingSymlinksInPath().standardizedFileURL.appendingPathComponent(id.rawValue).standardizedFileURL
-        }) else { throw WallpaperError.message("Steam 返回了预期目录以外的下载路径，已停止导入。") }
+        }) else { throw WallpaperError.message(L("error.steam.steamReturnedADownloadPathOutsideTheExpected")) }
     }
     public static func folders(in root: URL) throws -> [URL] {
         try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])

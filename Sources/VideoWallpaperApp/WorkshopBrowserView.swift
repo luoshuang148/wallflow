@@ -1,3 +1,4 @@
+import WallpaperCore
 import SwiftUI
 import WebKit
 import WallpaperRuntime
@@ -17,18 +18,18 @@ struct WorkshopBrowserView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("浏览创意工坊").font(.title2.bold())
+                Text(L("workshop.browser.browseWorkshop")).font(.title2.bold())
                 Spacer()
-                Button("关闭") { browser.close(); dismiss() }.keyboardShortcut(.cancelAction)
+                Button(L("workshop.browser.close")) { browser.close(); dismiss() }.keyboardShortcut(.cancelAction)
             }
             HStack(spacing: 10) {
                 Button(action: browser.goBack) { Image(systemName: "chevron.left") }
-                    .help("后退").accessibilityLabel("后退").disabled(!browser.canGoBack)
+                    .help(L("workshop.browser.back")).accessibilityLabel(L("workshop.browser.back")).disabled(!browser.canGoBack)
                 Button(action: browser.goForward) { Image(systemName: "chevron.right") }
-                    .help("前进").accessibilityLabel("前进").disabled(!browser.canGoForward)
+                    .help(L("workshop.browser.forward")).accessibilityLabel(L("workshop.browser.forward")).disabled(!browser.canGoForward)
                 Button(action: browser.reload) { Image(systemName: "arrow.clockwise") }
-                    .help("重新加载").accessibilityLabel("重新加载")
-                Button("工坊首页", action: browser.goHome)
+                    .help(L("workshop.browser.reload")).accessibilityLabel(L("workshop.browser.reload"))
+                Button(L("workshop.browser.workshopHome"), action: browser.goHome)
                 Image(systemName: "lock.fill").foregroundStyle(.secondary)
                 Text(browser.address).font(.caption).foregroundStyle(.secondary).lineLimit(1).textSelection(.enabled)
                 Spacer(minLength: 0)
@@ -39,7 +40,7 @@ struct WorkshopBrowserView: View {
                 Text(error).font(.callout).foregroundStyle(.orange).textSelection(.enabled).lineLimit(3)
             }
             if !model.failures.isEmpty {
-                DisclosureGroup("\(model.failures.count) 项未完成，展开查看原因") {
+                DisclosureGroup(String(format: L("workshop.browser.itemsIncompleteExpandForDetails"), String(describing: model.failures.count))) {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(Array(model.failures.enumerated()), id: \.offset) { _, failure in
@@ -50,13 +51,13 @@ struct WorkshopBrowserView: View {
                 }
             }
             HStack {
-                if browser.isChecking { ProgressView().controlSize(.small); Text("正在检查作品…").font(.callout) }
+                if browser.isChecking { ProgressView().controlSize(.small); Text(L("workshop.browser.checkingItem")).font(.callout) }
                 else if let item = browser.currentItem {
                     Text(item.title).font(.callout).lineLimit(1)
-                    if !item.isVideo { Text("仅支持视频壁纸").font(.caption).foregroundStyle(.secondary) }
-                } else { Text("选择作品后可下载视频壁纸").font(.callout).foregroundStyle(.secondary) }
+                    if !item.isVideo { Text(L("workshop.browser.onlyVideoWallpapersAreSupported")).font(.caption).foregroundStyle(.secondary) }
+                } else { Text(L("workshop.browser.selectAnItemToDownloadItsVideoWallpaper")).font(.callout).foregroundStyle(.secondary) }
                 Spacer()
-                Button("下载此作品") {
+                Button(L("workshop.browser.downloadThisItem")) {
                     if let item = browser.currentItem, item.isVideo { model.downloadItem(item.id) }
                 }
                 .buttonStyle(.borderedProminent)
@@ -66,7 +67,7 @@ struct WorkshopBrowserView: View {
                 if model.isBusy || library.isBusy { ProgressView().controlSize(.small) }
                 Text(library.importStatus ?? model.status).font(.caption).foregroundStyle(.secondary).lineLimit(2).textSelection(.enabled)
                 Spacer()
-                if model.isBusy { Button("取消任务") { model.cancel() } }
+                if model.isBusy { Button(L("workshop.browser.cancelTask")) { model.cancel() } }
             }
             if model.isBusy, model.total > 0 { ProgressView(value: Double(model.completed), total: Double(model.total)) }
         }

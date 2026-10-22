@@ -1,3 +1,4 @@
+import WallpaperCore
 import AppKit
 import ServiceManagement
 
@@ -18,14 +19,14 @@ public enum PlayerLoginStartupCommand {
         let service = SMAppService.mainApp
         var errorMessage: String?
         do {
-            guard index + 1 < arguments.count else { throw commandError("缺少登录启动操作。") }
+            guard index + 1 < arguments.count else { throw commandError(L("error.startup.missingLaunchAtLoginOperation")) }
             switch arguments[index + 1] {
             case "status": break
             case "register":
                 if service.status != .enabled && service.status != .requiresApproval { try service.register() }
             case "unregister":
                 if service.status == .enabled || service.status == .requiresApproval { try service.unregister() }
-            default: throw commandError("未知登录启动操作。")
+            default: throw commandError(L("error.startup.unknownLaunchAtLoginOperation"))
             }
         } catch { errorMessage = error.localizedDescription }
         let reply = PlayerLoginReply(status: service.status.rawValue, bundleIdentifier: Bundle.main.bundleIdentifier ?? "",
@@ -50,7 +51,7 @@ private func commandError(_ message: String) -> NSError {
     }
     func register() throws {
         let value = try execute("register")
-        guard value == .enabled || value == .requiresApproval else { throw commandError("后台登录启动未注册成功，请重试。") }
+        guard value == .enabled || value == .requiresApproval else { throw commandError(L("error.startup.backgroundLaunchAtLoginCouldNotBeRegistered")) }
     }
     func unregister() throws { _ = try execute("unregister") }
     func openSettings() { SMAppService.openSystemSettingsLoginItems() }
@@ -58,16 +59,17 @@ private func commandError(_ message: String) -> NSError {
     private func execute(_ action: String) throws -> SMAppService.Status {
         let process = Process(), pipe = Pipe()
         process.executableURL = playerURL.appendingPathComponent("Contents/MacOS/WallFlowPlayer")
-        process.arguments = ["--wallflow-login-startup", action]
+        process.arguments = ["--wallflow-login-startup", action,
+                             "-AppleLanguages", "(\(Bundle.main.preferredLocalizations.first ?? "zh-Hans"))"]
         process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
         try process.run()
         let deadline = Date().addingTimeInterval(5)
         while process.isRunning && Date() < deadline { Thread.sleep(forTimeInterval: 0.01) }
-        guard !process.isRunning else { process.terminate(); throw commandError("后台登录启动操作超时，请重试。") }
-        guard process.terminationStatus == 0 else { throw commandError("后台登录启动操作未完成。") }
+        guard !process.isRunning else { process.terminate(); throw commandError(L("error.startup.theBackgroundLaunchAtLoginOperationTimedOut")) }
+        guard process.terminationStatus == 0 else { throw commandError(L("error.startup.theBackgroundLaunchAtLoginOperationDidNot")) }
         let reply = try JSONDecoder().decode(PlayerLoginReply.self, from: pipe.fileHandleForReading.readDataToEndOfFile())
         guard reply.bundleIdentifier == "local.zongzihao.VideoWallpaper.Player", reply.bundlePath == playerURL.path else {
-            throw commandError("后台登录启动程序身份不匹配，请使用完整的 WallFlow.app。")
+            throw commandError(L("error.startup.theBackgroundLoginHelperIdentityDoesNotMatch"))
         }
         if let error = reply.error { throw commandError(error) }
         switch reply.status {
@@ -75,7 +77,7 @@ private func commandError(_ message: String) -> NSError {
         case SMAppService.Status.requiresApproval.rawValue: return .requiresApproval
         case SMAppService.Status.notRegistered.rawValue: return .notRegistered
         case SMAppService.Status.notFound.rawValue: return .notFound
-        default: throw commandError("无法识别后台登录启动状态。")
+        default: throw commandError(L("error.startup.theBackgroundLaunchAtLoginStatusIsUnrecognized"))
         }
     }
 }

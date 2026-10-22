@@ -40,10 +40,10 @@ public enum LibraryMode { case standalone, management, player }
             let backup = storeURL.appendingPathExtension("damaged-\(Int(Date().timeIntervalSince1970))")
             do {
                 try FileManager.default.copyItem(at: storeURL, to: backup)
-                errorMessage = "设置文件无法读取，已保留备份：\(backup.lastPathComponent)。请重新导入壁纸。"
+                errorMessage = String(format: L("library.status.theSettingsFileCouldNotBeReadA"), String(describing: backup.lastPathComponent))
             } catch {
                 persistenceBlocked = true
-                errorMessage = "设置文件无法读取且备份失败。请先备份并移走：\(storeURL.path)"
+                errorMessage = String(format: L("library.status.theSettingsFileCouldNotBeReadOr"), String(describing: storeURL.path))
             }
         }
         intent.manuallyPaused = state.manuallyPaused
@@ -68,13 +68,13 @@ public enum LibraryMode { case standalone, management, player }
                     restored.insert(project.id); info[project.id] = cached; continue
                 }
                 let fresh = try WallpaperProject.load(folder: URL(fileURLWithPath: project.folderPath))
-                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message("视频路径已改变，请重新导入。") }
+                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message(L("library.status.theVideoPathHasChangedImportItAgain")) }
                 info[project.id] = try await MediaValidator.validate(url: URL(fileURLWithPath: fresh.videoPath))
                 guard ticket == generation else { return }
                 restored.insert(project.id)
             } catch {
                 guard ticket == generation else { return }
-                errorMessage = "无法恢复“\(project.title)”：\(error.localizedDescription)"
+                errorMessage = String(format: L("library.status.couldNotRestore"), String(describing: project.title), String(describing: error.localizedDescription))
             }
         }
         guard ticket == generation else { return }
@@ -162,17 +162,17 @@ public enum LibraryMode { case standalone, management, player }
         defer { endOperation() }
         do {
             guard let project = state.projects.first(where: { $0.id == projectID }) else {
-                throw WallpaperError.message("找不到这张壁纸，请重新导入。")
+                throw WallpaperError.message(L("library.status.thisWallpaperCouldNotBeFoundImportIt"))
             }
             let fresh = try WallpaperProject.load(folder: URL(fileURLWithPath: project.folderPath))
-            guard fresh.videoPath == project.videoPath else { throw WallpaperError.message("视频路径已改变，请重新导入壁纸。") }
+            guard fresh.videoPath == project.videoPath else { throw WallpaperError.message(L("library.status.theVideoPathHasChangedImportTheWallpaper")) }
             let info = try await MediaValidator.validate(url: URL(fileURLWithPath: fresh.videoPath))
             guard ticket == generation else { return false }
             guard !fromPlaylist || (playlistSettings == state.playlist && playlistEligible(ignoringBusy:true)) else { return false }
             var next = state
             let assignment = Assignment(projectID: projectID, fit: fit)
             if let target {
-                guard displays.contains(where: { $0.id == target }) else { throw WallpaperError.message("显示器已断开，请重新选择屏幕。") }
+                guard displays.contains(where: { $0.id == target }) else { throw WallpaperError.message(L("library.status.theDisplayDisconnectedSelectADisplayAgain")) }
                 next.assignments[target] = assignment
             } else { next.applyToAll(assignment, displays: displays.map(\.id)) }
             if applicationEffects.stopped || mode == .management {
@@ -272,16 +272,16 @@ public enum LibraryMode { case standalone, management, player }
     }
     public func setExternalPlaybackStatus(_ status: [String: String]) { externalPlaybackStatus = status }
     public func playbackStatus(for displayID: String) -> String {
-        if mode == .management { return externalPlaybackStatus[displayID] ?? "等待后台播放" }
-        if applicationEffects.stopped { return "应用规则 · 已释放" }
-        if applicationEffects.paused { return "应用规则 · 暂停" }
-        if state.manuallyPaused { return "手动暂停" }
+        if mode == .management { return externalPlaybackStatus[displayID] ?? L("library.status.waitingForBackgroundPlayback") }
+        if applicationEffects.stopped { return L("library.status.applicationRuleResourcesFreed") }
+        if applicationEffects.paused { return L("library.status.applicationRulePaused") }
+        if state.manuallyPaused { return L("library.status.manuallyPaused") }
         let reasons = state.performance.pauseReasons(onBattery: onBattery, lowPowerMode: lowPowerMode, occluded: engine.sessions[displayID]?.isOccluded ?? false)
-        if reasons.contains(.battery) { return "电池供电 · 暂停" }
-        if reasons.contains(.lowPowerMode) { return "低电量模式 · 暂停" }
-        if isSystemSuspended { return "系统暂停" }
-        if reasons.contains(.occluded) { return "桌面被遮挡 · 暂停" }
-        return engine.sessions[displayID] == nil ? "等待播放" : (applicationEffects.muted ? "播放中 · 规则静音" : "播放中")
+        if reasons.contains(.battery) { return L("library.status.onBatteryPaused") }
+        if reasons.contains(.lowPowerMode) { return L("library.status.lowPowerModePaused") }
+        if isSystemSuspended { return L("library.status.pausedBySystem") }
+        if reasons.contains(.occluded) { return L("library.status.desktopCoveredPaused") }
+        return engine.sessions[displayID] == nil ? L("library.status.waitingForPlayback") : (applicationEffects.muted ? L("library.status.playingMutedByRule") : L("library.status.playing"))
     }
     private func reconcile() {
         guard mode != .management else { return }
@@ -303,9 +303,9 @@ public enum LibraryMode { case standalone, management, player }
     public func displayName(for project:WallpaperProject) -> String { state.organization.displayName(for:project) }
     @discardableResult public func rename(projectID:String,name:String?) -> Bool {
         do {
-            guard let project = state.projects.first(where:{ $0.id == projectID }) else { throw WallpaperError.message("找不到这张壁纸。") }
+            guard let project = state.projects.first(where:{ $0.id == projectID }) else { throw WallpaperError.message(L("library.status.thisWallpaperCouldNotBeFound")) }
             let trimmed = name?.trimmingCharacters(in:.whitespacesAndNewlines)
-            if let trimmed, trimmed.isEmpty { throw WallpaperError.message("壁纸名称不能为空。") }
+            if let trimmed, trimmed.isEmpty { throw WallpaperError.message(L("library.status.theWallpaperNameCannotBeEmpty")) }
             var next = state
             next.organization.customNames[projectID] = trimmed == project.title ? nil : trimmed
             try commit(next); errorMessage = nil
@@ -324,7 +324,7 @@ public enum LibraryMode { case standalone, management, player }
         do {
             try playlist.validate(availableIDs:Set(state.projects.map(\.id)))
             if let target = playlist.targetDisplayID, playlist.enabled, !displays.contains(where: { $0.id == target }) {
-                throw WallpaperError.message("显示器已断开，请重新选择屏幕。")
+                throw WallpaperError.message(L("library.status.theDisplayDisconnectedSelectADisplayAgain"))
             }
             var next = state; next.playlist = playlist
             try commit(next); playlistClock.reset(); errorMessage = nil
@@ -369,7 +369,7 @@ public enum LibraryMode { case standalone, management, player }
     }
     private func commit(_ next: AppState, fromPlaylist: Bool = false) throws {
         guard !terminating else { throw CancellationError() }
-        guard !persistenceBlocked else { throw WallpaperError.message("请先处理无法读取的设置文件，再重新启动软件。") }
+        guard !persistenceBlocked else { throw WallpaperError.message(L("library.status.resolveTheUnreadableSettingsFileBeforeRestartingThe")) }
         if mode == .standalone {
             try StateStore.save(next, to: storeURL); state = next
         } else {

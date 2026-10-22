@@ -12,12 +12,12 @@ public struct WorkshopID: Hashable, Codable, Identifiable, Sendable {
                   c.user == nil, c.password == nil, c.port == nil,
                   ["/sharedfiles/filedetails", "/workshop/filedetails"].contains(c.path.trimmingCharacters(in: CharacterSet(charactersIn: "/" )).withLeadingSlash),
                   let ids = c.queryItems?.filter({ $0.name == "id" }), ids.count == 1, let value = ids[0].value else {
-                throw WallpaperError.message("请粘贴 Steam 创意工坊详情页链接，或纯数字编号。")
+                throw WallpaperError.message(L("error.workshop.pasteASteamWorkshopItemLinkOrA"))
             }
             number = value
         } else { number = input }
         guard !number.isEmpty, number.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }), let value = UInt64(number), value > 0 else {
-            throw WallpaperError.message("创意工坊编号须为有效的正整数。")
+            throw WallpaperError.message(L("error.workshop.theWorkshopIDMustBeAValidPositive"))
         }
         rawValue = String(value)
     }
@@ -34,10 +34,10 @@ public struct WorkshopItem: Identifiable, Equatable, Sendable {
     public var isVideo: Bool { result == 1 && appID == 431960 && tags.contains { $0.lowercased() == "video" } }
     public static func decodeResponse(_ data: Data) throws -> [WorkshopItem] {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any], let response = json["response"] as? [String: Any],
-              let details = response["publishedfiledetails"] as? [[String: Any]] else { throw WallpaperError.message("Steam 返回了无法识别的壁纸信息。") }
+              let details = response["publishedfiledetails"] as? [[String: Any]] else { throw WallpaperError.message(L("error.workshop.steamReturnedUnrecognizedWallpaperInformation")) }
         return try details.map { d in
             let id = try WorkshopID(d["publishedfileid"] as? String ?? "")
-            return WorkshopItem(id: id, title: d["title"] as? String ?? "编号 \(id.rawValue)",
+            return WorkshopItem(id: id, title: d["title"] as? String ?? String(format: L("error.workshop.id"), String(describing: id.rawValue)),
                                 bytes: max(0, Int64(String(describing: d["file_size"] ?? "0")) ?? 0),
                                 result: d["result"] as? Int ?? 0, appID: d["consumer_app_id"] as? Int ?? 0,
                                 tags: (d["tags"] as? [[String: Any]] ?? []).compactMap { $0["tag"] as? String })
@@ -51,7 +51,7 @@ public enum SteamDownloadResult {
         let regex = try NSRegularExpression(pattern: pattern)
         guard exitCode == 0, let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
               let range = Range(match.range(at: 1), in: output), output[range].hasPrefix("/") else {
-            throw WallpaperError.message("Steam 未确认本次下载成功。请先用“登录下载账号”完成登录，确认账号拥有 Wallpaper Engine，再重试；也请检查网络、磁盘空间和作品是否仍可访问。")
+            throw WallpaperError.message(L("error.workshop.steamDidNotConfirmTheDownloadUseSign"))
         }
         return URL(fileURLWithPath: String(output[range]), isDirectory: true)
     }
@@ -72,7 +72,7 @@ public indirect enum SteamKeyValues {
     public static func installedIDs(_ text: String) throws -> [WorkshopID] {
         let root = try parse(text).object("AppWorkshop")
         guard root?.object("appid")?.value == "431960", let installed = root?.object("WorkshopItemsInstalled") else {
-            throw WallpaperError.message("请选择 Wallpaper Engine 的 appworkshop_431960.acf 清单。")
+            throw WallpaperError.message(L("error.workshop.selectTheWallpaperEngineAppworkshop431960AcfManifest"))
         }
         return try installed.keys.map(WorkshopID.init)
     }
@@ -117,6 +117,6 @@ public indirect enum SteamKeyValues {
                 else { result.append((key, .string(try token()))) }
             }
         }
-        var invalid: WallpaperError { .message("Steam 清单格式损坏，无法读取。") }
+        var invalid: WallpaperError { .message(L("error.workshop.theSteamManifestIsCorruptedAndCannotBe")) }
     }
 }

@@ -26,7 +26,7 @@ import WallpaperCore
         let values = try source.resourceValues(forKeys:[.fileSizeKey,.contentModificationDateKey])
         let manifestData = try Data(contentsOf:URL(fileURLWithPath:project.folderPath).appendingPathComponent("project.json"))
         guard var metadata = try JSONSerialization.jsonObject(with:manifestData) as? [String:Any] else {
-            throw WallpaperError.message("project.json 格式不正确。")
+            throw WallpaperError.message(L("error.project.theProjectJsonFormatIsInvalid"))
         }
         var fingerprint = manifestData
         fingerprint.append(Data("\n\(source.path)\n\(values.fileSize ?? 0)\n\(values.contentModificationDate?.timeIntervalSince1970 ?? 0)\nh264-crf18-yuv420p-pad-aac-v3".utf8))
@@ -43,9 +43,9 @@ import WallpaperCore
         }
         try Task.checkCancellation()
         guard let ffmpeg, fm.isExecutableFile(atPath:ffmpeg.path) else {
-            throw WallpaperError.message("自动转换需要 FFmpeg。请安装 FFmpeg（Homebrew：brew install ffmpeg），或将可运行的工具放在 App 同级 MediaTools/ffmpeg。原文件已保留。")
+            throw WallpaperError.message(L("error.convert.automaticConversionRequiresFFmpegInstallItHomebrewBrew"))
         }
-        onProgress?("正在转换为 MP4：\(project.title)（首次转换可能需要几分钟）")
+        onProgress?(String(format: L("error.convert.convertingToMP4TheFirstConversionMayTake"), String(describing: project.title)))
         try fm.createDirectory(at:cacheRoot,withIntermediateDirectories:true)
         let staging = cacheRoot.appendingPathComponent(".conversion-"+UUID().uuidString,isDirectory:true)
         defer { try? fm.removeItem(at:staging) }
@@ -61,7 +61,7 @@ import WallpaperCore
         ], timeout:3600, outputLimit:16384)
         try Task.checkCancellation()
         guard result.exitCode == 0 else {
-            throw WallpaperError.message("视频转换失败，原文件已保留。\n"+String(result.output.suffix(1500)))
+            throw WallpaperError.message(String(format: L("error.convert.videoConversionFailedYourOriginalFileWasKept"), String(result.output.suffix(1500))))
         }
         _ = try await MediaValidator.validate(url:output)
         try Task.checkCancellation()

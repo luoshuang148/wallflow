@@ -5,7 +5,7 @@ import WallpaperCore
 
 @MainActor public final class WorkshopBrowser: NSObject, ObservableObject, WKNavigationDelegate, WKUIDelegate {
     public typealias ItemLoader = (WorkshopID) async throws -> WorkshopItem
-    public static let home = URL(string: "https://steamcommunity.com/workshop/browse/?appid=431960&browsesort=trend&section=readytouseitems&requiredtags%5B%5D=Video&l=schinese")!
+    public static let home = URL(string: "https://steamcommunity.com/workshop/browse/?appid=431960&browsesort=trend&section=readytouseitems&requiredtags%5B%5D=Video&l=\(L("workshop.browser.steamLanguage"))")!
     public let webView: WKWebView
     @Published public private(set) var address = home.absoluteString
     @Published public private(set) var isLoading = false
@@ -97,12 +97,12 @@ import WallpaperCore
                 let item = try await self.itemLoader(id)
                 try Task.checkCancellation()
                 guard request == self.generation, !self.isClosed else { return }
-                guard item.id == id else { throw WallpaperError.message("Steam 返回的作品信息与当前页面不匹配。") }
+                guard item.id == id else { throw WallpaperError.message(L("workshop.browser.steamReturnedItemInformationThatDoesNotMatch")) }
                 self.currentItem = item
             } catch is CancellationError { }
             catch {
                 guard request == self.generation, !self.isClosed else { return }
-                self.errorMessage = "无法读取作品信息：\(error.localizedDescription)"
+                self.errorMessage = String(format: L("workshop.browser.couldNotReadItemInformation"), String(describing: error.localizedDescription))
             }
             if request == self.generation, !self.isClosed {
                 self.isChecking = false; self.lookup = nil
@@ -113,7 +113,7 @@ import WallpaperCore
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard !isClosed, let url = navigationAction.request.url, SubscriptionBrowser.isOfficial(url) else {
             if navigationAction.targetFrame?.isMainFrame ?? true {
-                clearSelection(); errorMessage = "仅支持浏览官方 Steam 页面。"
+                clearSelection(); errorMessage = L("workshop.browser.onlyOfficialSteamPagesCanBeBrowsed")
             }
             decisionHandler(.cancel); return
         }
@@ -130,12 +130,12 @@ import WallpaperCore
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { record(error) }
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { record(error) }
     public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        clearSelection(); isLoading = false; errorMessage = "Steam 页面已停止，请重新加载。"
+        clearSelection(); isLoading = false; errorMessage = L("workshop.browser.theSteamPageStoppedReloadIt")
     }
     private func record(_ error: Error) {
         guard !isClosed, (error as NSError).code != NSURLErrorCancelled else { return }
         clearSelection(); isLoading = false; updateNavigation()
-        errorMessage = "Steam 页面加载失败：\(error.localizedDescription)"
+        errorMessage = String(format: L("workshop.subscriptions.steamPageFailedToLoad"), String(describing: error.localizedDescription))
     }
     public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                         for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
