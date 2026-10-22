@@ -56,7 +56,7 @@ import WallpaperRuntime
         if let error = startup.errorMessage { model.errorMessage = error }
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 690),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-        window.title = "WallFlow"
+        window.title = "Wallnamic"
         window.minSize = NSSize(width: 900, height: 660)
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: LibraryView(model: model, workshop: workshop, startup: startup, exit: exit))
@@ -102,10 +102,10 @@ import WallpaperRuntime
         let quit = NSMenuItem(title: L("menu.quitWallFlow"), action: #selector(quit), keyEquivalent: ""); quit.target = self
         menu.addItem(quit); item.menu = menu
         cancellable = model.$state.map(\.manuallyPaused).removeDuplicates().sink { [weak self] paused in
-            let image = NSImage(systemSymbolName: paused ? "pause.rectangle" : "play.rectangle", accessibilityDescription: "WallFlow")
+            let image = NSImage(systemSymbolName: paused ? "pause.rectangle" : "play.rectangle", accessibilityDescription: "Wallnamic")
             image?.isTemplate = true
             self?.statusItem?.button?.image = image
-            self?.statusItem?.button?.toolTip = paused ? L("menu.wallflowPaused") : "WallFlow"
+            self?.statusItem?.button?.toolTip = paused ? L("menu.wallflowPaused") : "Wallnamic"
         }
     }
     func menuWillOpen(_ menu: NSMenu) {

@@ -1,6 +1,6 @@
 # 开发说明
 
-WallFlow 使用 Swift Package Manager；Swift 6 工具链、Swift 5 语言模式，最低 macOS 14。无外部 Swift 包依赖。
+Wallnamic 使用 Swift Package Manager；Swift 6 工具链、Swift 5 语言模式，最低 macOS 14。无外部 Swift 包依赖。
 
 ## 代码地图
 
@@ -31,7 +31,7 @@ WallFlow 使用 Swift Package Manager；Swift 6 工具链、Swift 5 语言模式
 
 ```bash
 ./build.sh
-codesign --verify --deep --strict dist/WallFlow.app
+codesign --verify --deep --strict dist/Wallnamic.app
 ```
 
 若同步文件夹附加了 Finder 元数据，可将应用用 `ditto --norsrc --noextattr` 复制到干净临时目录后检查签名。
@@ -45,20 +45,24 @@ CI 使用 GitHub 的 `macos-15` runner，执行 Release 构建与签名检查，
 需要 macOS 14+ 和支持 Swift 6 的 Xcode 工具链。
 
 ```bash
-git clone https://github.com/luoshuang148/wallflow.git
-cd wallflow
+git clone https://github.com/luoshuang148/wallnamic.git
+cd wallnamic
 ./build.sh
-open dist/WallFlow.app
+open dist/Wallnamic.app
 ```
 
-构建脚本将应用在临时目录中完成本地签名，再输出到 `dist/WallFlow.app`。此签名适合本地构建，不包含 Developer ID 公证；其他机器、Intel Mac 和所有多屏/电源场景尚未完整验证。
+构建脚本将应用在临时目录中完成本地签名，再输出到 `dist/Wallnamic.app`。此签名适合本地构建，不包含 Developer ID 公证；其他机器、Intel Mac 和所有多屏/电源场景尚未完整验证。
 
 可用环境变量指定构建目录和应用输出路径：
 
 ```bash
-WALLFLOW_BUILD_DIR=/tmp/wallflow-build \
-WALLFLOW_APP_DIR="$PWD/dist/WallFlow.app" \
+WALLNAMIC_BUILD_DIR=/tmp/wallnamic-build \
+WALLNAMIC_APP_DIR="$PWD/dist/Wallnamic.app" \
 ./build.sh
 ```
 
 源码目录名、Swift 模块名、Bundle Identifier 和设置目录沿用初版名称，以兼容已有安装。
+
+## 品牌改名与兼容性
+
+Wallnamic 原名 WallFlow。应用显示名和输出目录已更新；`VideoWallpaper`、`WallFlowPlayer` 可执行文件、播放器内嵌路径、Bundle Identifier、本地设置目录、登录项标识与进程通信协议保持不变。无需迁移媒体或设置。构建参数优先使用 `WALLNAMIC_BUILD_DIR`、`WALLNAMIC_APP_DIR`、`WALLNAMIC_CHECK_LOCALIZATION`；旧的 `WALLFLOW_*` 参数仍可使用。

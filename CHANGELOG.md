@@ -2,7 +2,15 @@
 
 仅记录已有提交能确认的变化。日期使用 Asia/Shanghai。
 
-## [0.9.3](https://github.com/luoshuang148/wallflow/releases/tag/v0.9.3) — 2026-10-15
+## 0.9.4 — 未发布 / Unreleased (build 23)
+
+- 项目正式更名为 **Wallnamic**（原 WallFlow）；更新窗口、菜单、提示、应用显示名、构建产物、文档和仓库链接。
+- 保留 Bundle Identifier、设置目录、播放器路径、登录项身份和进程通信协议，继续兼容已有安装与数据。
+- 源码构建输出为 `Wallnamic.app`；公开 0.9.3 附件仍保留原 `WallFlow` 名称。
+- Renamed the project to **Wallnamic** (formerly WallFlow), including app display names, UI copy, build output, documentation, and repository links.
+- Preserved bundle identifiers, settings, embedded player paths, login-item identity, and IPC for compatibility. Source builds produce `Wallnamic.app`; published 0.9.3 assets keep their original names.
+
+## [0.9.3](https://github.com/luoshuang148/wallnamic/releases/tag/v0.9.3) — 2026-10-15
 
 本次公开发布包含 0.8.0–0.9.3 的全部开发改动，build 22。
 This release includes all development changes from 0.8.0 through 0.9.3 (build 22).
@@ -62,7 +70,7 @@ From 0.7.1, quit normally from the menu bar before replacing the app. From a 0.9
 - 浏览与订阅读取共享网页会话；页面切换、关闭或取消后忽略过期作品信息。
 - 更新为用户确认的 WallFlow 图标：双色蓝、叠层圆角框、齿轮与中心流动符号。
 
-## [0.7.1](https://github.com/luoshuang148/wallflow/releases/tag/v0.7.1) — 2026-10-14
+## [0.7.1](https://github.com/luoshuang148/wallnamic/releases/tag/v0.7.1) — 2026-10-14
 
 ### 修复 / Fixed
 

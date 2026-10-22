@@ -1,28 +1,28 @@
 <p align="center">
-  <img src="docs/assets/icon.png" width="88" height="88" alt="WallFlow icon">
+  <img src="docs/assets/icon.png" width="88" height="88" alt="Wallnamic icon">
 </p>
 
-<h1 align="center">WallFlow</h1>
+<h1 align="center">Wallnamic</h1>
 <p align="center"><strong>Bring motion to your Mac.</strong><br>A native macOS video wallpaper app for your favorite videos, on every display.</p>
 
 <p align="center">
   <a href="README.md">简体中文</a> ·
-  <a href="https://github.com/luoshuang148/wallflow/releases/latest">Download</a> ·
+  <a href="https://github.com/luoshuang148/wallnamic/releases/latest">Download</a> ·
   <a href="docs/USER_GUIDE.en.md">User guide</a> ·
-  <a href="https://github.com/luoshuang148/wallflow/issues/new/choose">Feedback</a>
+  <a href="https://github.com/luoshuang148/wallnamic/issues/new/choose">Feedback</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/luoshuang148/wallflow/releases/latest"><img src="https://img.shields.io/github/v/release/luoshuang148/wallflow?label=release&amp;color=2675d8" alt="Latest release"></a>
-  <a href="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml"><img src="https://github.com/luoshuang148/wallflow/actions/workflows/ci.yml/badge.svg" alt="macOS CI"></a>
+  <a href="https://github.com/luoshuang148/wallnamic/releases/latest"><img src="https://img.shields.io/github/v/release/luoshuang148/wallnamic?label=release&amp;color=2675d8" alt="Latest release"></a>
+  <a href="https://github.com/luoshuang148/wallnamic/actions/workflows/ci.yml"><img src="https://github.com/luoshuang148/wallnamic/actions/workflows/ci.yml/badge.svg" alt="macOS CI"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-555555?logo=apple&amp;logoColor=white" alt="macOS 14 or newer">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2675d8" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/download-Apple%20Silicon-2675d8" alt="Apple Silicon download">
 </p>
 
-![WallFlow brand illustration: flowing video across two displays, not an app screenshot](docs/assets/hero.svg)
+![Wallnamic brand illustration: flowing video across two displays, not an app screenshot](docs/assets/hero.svg)
 
-WallFlow is for Mac users who want video wallpapers, a personal wallpaper library, or support for importing Wallpaper Engine video projects. Built with SwiftUI, AppKit, and AVFoundation, it plays local video projects and uses SteamCMD to download Workshop videos your account can access.
+Wallnamic is for Mac users who want video wallpapers, a personal wallpaper library, or support for importing Wallpaper Engine video projects. Built with SwiftUI, AppKit, and AVFoundation, it plays local video projects and uses SteamCMD to download Workshop videos your account can access.
 
 > **Before downloading:** The published app is **0.9.3**, for **macOS 14+ and Apple Silicon (M-series chips)**. The app interface is currently **Simplified Chinese**. Only **video wallpapers** are supported; Scene, web, and application wallpapers are outside the current scope. The app is not notarized by Apple.
 
@@ -46,7 +46,9 @@ Source builds may differ from the published download; check the [changelog](CHAN
 
 ## Install
 
-1. Open [Releases](https://github.com/luoshuang148/wallflow/releases/latest) and download `WallFlow-0.9.3-macOS-arm64.dmg` (or the same-named `.zip`).
+> **Name change:** Wallnamic was formerly called WallFlow. The published 0.9.3 downloads still use the `WallFlow` name; builds from this source produce `Wallnamic.app`.
+
+1. Open [Releases](https://github.com/luoshuang148/wallnamic/releases/latest) and download `WallFlow-0.9.3-macOS-arm64.dmg` (or the same-named `.zip`).
 2. Open the DMG, move `WallFlow.app` to **Applications**, and open it. For the ZIP, extract it first, then move the app.
 3. If macOS blocks the app, try opening it first, then use **System Settings → Privacy & Security → Open Anyway**. Follow [Apple's official instructions](https://support.apple.com/en-us/102445) to approve an exception for this app.
 
@@ -73,7 +75,7 @@ Choose **停止壁纸并完全退出** (Stop wallpaper and completely quit) in S
 
 Natively playable MP4 video projects need no additional tools. **Local imports do not require a Steam account or a Wallpaper Engine purchase.** Workshop downloads require [Valve's SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) and a Steam account that owns Wallpaper Engine and can access the item. Other video formats may require FFmpeg.
 
-WallFlow references original media in place, so keep imported folders available. Removing a library entry does not delete source files, and renaming does not modify the source `project.json`.
+Wallnamic references original media in place, so keep imported folders available. Removing a library entry does not delete source files, and renaming does not modify the source `project.json`.
 
 The [user guide](docs/USER_GUIDE.en.md) covers tool setup, playlists, power policies, login startup, and local data.
 
@@ -87,7 +89,7 @@ The [user guide](docs/USER_GUIDE.en.md) covers tool setup, playlists, power poli
 
 **Why does downloading ask me to log in again?** Steam's webpage and SteamCMD use separate sessions.
 
-**Having trouble installing, playing, or converting?** Check the [user guide](docs/USER_GUIDE.en.md#troubleshooting) and [known issues](docs/KNOWN_ISSUES.md), then submit reproduction steps using the [issue forms](https://github.com/luoshuang148/wallflow/issues/new/choose). [Get help](SUPPORT.md)
+**Having trouble installing, playing, or converting?** Check the [user guide](docs/USER_GUIDE.en.md#troubleshooting) and [known issues](docs/KNOWN_ISSUES.md), then submit reproduction steps using the [issue forms](https://github.com/luoshuang148/wallnamic/issues/new/choose). [Get help](SUPPORT.md)
 
 ## Source localization status
 
@@ -98,10 +100,10 @@ The source now includes Simplified Chinese and English localization tables, with
 Use a Swift 6-capable Xcode toolchain on macOS 14+:
 
 ```bash
-git clone https://github.com/luoshuang148/wallflow.git
-cd wallflow
+git clone https://github.com/luoshuang148/wallnamic.git
+cd wallnamic
 ./build.sh
-open dist/WallFlow.app
+open dist/Wallnamic.app
 ```
 
 See the [development guide](docs/DEVELOPMENT.md) for the code map and build options. CI builds the app and verifies signing.
@@ -110,14 +112,14 @@ See the [development guide](docs/DEVELOPMENT.md) for the code map and build opti
 
 Everyone is welcome to participate in Chinese or English, including without writing code:
 
-- [Report a bug](https://github.com/luoshuang148/wallflow/issues/new?template=bug_report.yml) with your version, device details, and reproduction steps.
-- [Suggest a feature](https://github.com/luoshuang148/wallflow/issues/new?template=feature_request.yml) by describing a real use case and desired behavior.
+- [Report a bug](https://github.com/luoshuang148/wallnamic/issues/new?template=bug_report.yml) with your version, device details, and reproduction steps.
+- [Suggest a feature](https://github.com/luoshuang148/wallnamic/issues/new?template=feature_request.yml) by describing a real use case and desired behavior.
 - Improve documentation, translate guides, or submit a focused Pull Request. Read the [contributing guide](CONTRIBUTING.md) first.
 
-Report vulnerabilities through [private vulnerability reporting](https://github.com/luoshuang148/wallflow/security/advisories/new); see the [security policy](SECURITY.md). Remove accounts, personal paths, and session data from screenshots and logs.
+Report vulnerabilities through [private vulnerability reporting](https://github.com/luoshuang148/wallnamic/security/advisories/new); see the [security policy](SECURITY.md). Remove accounts, personal paths, and session data from screenshots and logs.
 
 ## Licensing and third-party content
 
-WallFlow is released under the [MIT License](LICENSE). Third-party tools and wallpapers are not covered by this project's license.
+Wallnamic is released under the [MIT License](LICENSE). Third-party tools and wallpapers are not covered by this project's license.
 
-WallFlow is independent and unaffiliated with Valve, Steam, or Wallpaper Engine. Third-party tools and wallpapers retain their own licenses and author permissions. Only import or share content you are entitled to use.
+Wallnamic is independent and unaffiliated with Valve, Steam, or Wallpaper Engine. Third-party tools and wallpapers retain their own licenses and author permissions. Only import or share content you are entitled to use.

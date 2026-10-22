@@ -5,15 +5,15 @@ body:
   - type: markdown
     attributes:
       value: |
-        欢迎中文或英文。请先搜索现有 Issue，并查看[已知问题](https://github.com/luoshuang148/wallflow/blob/main/docs/KNOWN_ISSUES.md)。
+        欢迎中文或英文。请先搜索现有 Issue，并查看[已知问题](https://github.com/luoshuang148/wallnamic/blob/main/docs/KNOWN_ISSUES.md)。
         Chinese and English are welcome. Search existing issues and check the known issues first.
         不要上传 Steam 凭据、会话文件、完整状态文件或无权分享的壁纸；请脱敏截图与日志。
         Never attach credentials, session files, full state files, or unauthorized wallpapers. Sanitize screenshots and logs.
-        安全漏洞请[私下报告 / Report vulnerabilities privately](https://github.com/luoshuang148/wallflow/security/advisories/new)。
+        安全漏洞请[私下报告 / Report vulnerabilities privately](https://github.com/luoshuang148/wallnamic/security/advisories/new)。
   - type: input
     id: version
     attributes:
-      label: WallFlow 版本 / Version
+      label: Wallnamic 版本 / Version
       description: 在应用中查看版本；源码构建请附提交编号。 / Include the build number or source commit if available.
       placeholder: 0.9.3 (build 22)
     validations:

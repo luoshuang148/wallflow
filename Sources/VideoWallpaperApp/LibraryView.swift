@@ -70,7 +70,7 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "play.rectangle.fill").font(.title2).foregroundStyle(accent)
-                Text("WallFlow").font(.headline)
+                Text("Wallnamic").font(.headline)
             }.padding(.horizontal, 22).padding(.top, 28).padding(.bottom, 30)
             HStack {
                 Text(L("library.myWallpapers")).font(.caption.weight(.semibold)).foregroundStyle(.secondary)

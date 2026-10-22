@@ -12,9 +12,9 @@ python3 scripts/check_localization.py
 后续在可停止旧后台播放器的测试会话中验证（先保留当前配置）：
 
 ```sh
-open -n "$PWD/dist/WallFlow.app" --args -AppleLanguages '(en)'
+open -n "$PWD/dist/Wallnamic.app" --args -AppleLanguages '(en)'
 # 完全退出该测试会话，再测试中文；不要让两个管理端争用同一个后台播放器。
-open -n "$PWD/dist/WallFlow.app" --args -AppleLanguages '(zh-Hans)'
+open -n "$PWD/dist/Wallnamic.app" --args -AppleLanguages '(zh-Hans)'
 ```
 
 逐项检查：主窗口/空状态、导入与失败提示、显示器分配、设置和播放策略、创意工坊、菜单栏、弹窗、通知与辅助功能标签；检查英文长文本截断、中文原文、参数显示与取消/退出流程。先确认截图只含原创合成壁纸，隐藏用户库、路径和账号；未经实机验收不要对外宣称完整英文体验。

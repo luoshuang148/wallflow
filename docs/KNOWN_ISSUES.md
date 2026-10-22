@@ -28,7 +28,7 @@
 
 ### 历史记录
 
-2026-10-14 的本机默认测试执行 113 项，跳过 31 项，失败 0 项。跳过项依赖媒体样本、工具或账号环境；这不代表全部可选集成测试通过。准确的 CI 结果与跳过项以 [Actions 日志](https://github.com/luoshuang148/wallflow/actions) 为准。
+2026-10-14 的本机默认测试执行 113 项，跳过 31 项，失败 0 项。跳过项依赖媒体样本、工具或账号环境；这不代表全部可选集成测试通过。准确的 CI 结果与跳过项以 [Actions 日志](https://github.com/luoshuang148/wallnamic/actions) 为准。
 
 0.8.0 开发版本机默认测试执行 123 项，跳过 32 项，失败 0 项；额外启用真实公开 Steam 页面测试，WebKit 列表浏览与视频详情信息验证通过。本轮未执行真实账号的作品下载，也未重新验证原有遮挡集成场景。
 
@@ -60,6 +60,6 @@ For 0.9.3 (build 22), on 2026-10-15, the local default suite ran 165 tests with 
 Account downloads, personal media, all display/power combinations, and the older occlusion integration were not run. Skipped tests remain unverified.
 
 
-The local default suite recorded for the 0.7.1 release on 2026-10-14 ran 113 tests, skipped 31, and failed none. Skips require media, tools, or account sessions and do not establish that optional integrations work. Check [Actions logs](https://github.com/luoshuang148/wallflow/actions) for current CI results.
+The local default suite recorded for the 0.7.1 release on 2026-10-14 ran 113 tests, skipped 31, and failed none. Skips require media, tools, or account sessions and do not establish that optional integrations work. Check [Actions logs](https://github.com/luoshuang148/wallnamic/actions) for current CI results.
 
 Report new issues with the app version, macOS version, chip, display count, and reproduction steps. Sanitize logs before posting.

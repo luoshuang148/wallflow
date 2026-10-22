@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "VideoWallpaper",
+    name: "Wallnamic",
     platforms: [.macOS(.v14)],
     products: [.executable(name: "VideoWallpaper", targets: ["VideoWallpaperApp"]),
                .executable(name: "WallFlowPlayer", targets: ["WallFlowPlayer"])],

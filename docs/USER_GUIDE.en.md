@@ -1,4 +1,6 @@
-# WallFlow user guide
+# Wallnamic user guide
+
+> **Name change:** Wallnamic was formerly called WallFlow. The published 0.9.3 downloads still use the `WallFlow` name; builds from this source produce `Wallnamic.app`.
 
 [Back to the homepage](../README.en.md) · [简体中文](USER_GUIDE.md)
 
@@ -6,7 +8,7 @@ Installation and menu paths below describe the published **0.9.3 (build 22)** ap
 
 ## Installation and updates
 
-Download `WallFlow-0.9.3-macOS-arm64.dmg` (or the same-named `.zip`) from the [latest release](https://github.com/luoshuang148/wallflow/releases/latest). Open the DMG and move `WallFlow.app` to Applications. For the ZIP, extract it first. Requires macOS 14+ and Apple Silicon. Intel has no prebuilt download and has not been fully tested.
+Download `WallFlow-0.9.3-macOS-arm64.dmg` (or the same-named `.zip`) from the [latest release](https://github.com/luoshuang148/wallnamic/releases/latest). Open the DMG and move `WallFlow.app` to Applications. For the ZIP, extract it first. Requires macOS 14+ and Apple Silicon. Intel has no prebuilt download and has not been fully tested.
 
 The app is ad-hoc signed, without Developer ID signing or notarization. If macOS blocks it, try opening it first, then follow [Apple's instructions](https://support.apple.com/en-us/102445) under System Settings → Privacy & Security → Open Anyway. The release includes no wallpapers, SteamCMD, or FFmpeg.
 
@@ -26,9 +28,9 @@ Before updating, choose **停止壁纸并完全退出** (Stop wallpaper and comp
 4. Open **设置 → 壁纸库与自动播放** (Settings → Library and autoplay) for groups, playlists, app rules, and login startup.
 5. Open **设置 → 性能与电源** (Settings → Performance and power) for automatic pause policies.
 
-WallFlow references the original video files; keep them accessible. Removing an entry does not delete source media. Custom names remain local and do not modify `project.json`.
+Wallnamic references the original video files; keep them accessible. Removing an entry does not delete source media. Custom names remain local and do not modify `project.json`.
 
-Closing the window hides management while playback continues. Menu-bar Quit and Command-Q quit management and remove its menu-bar icon; the independent **WallFlowPlayer** keeps playing videos, audio, and playlists and applying pause policies. Reopening WallFlow reconnects to the running player without resetting playback.
+Closing the window hides management while playback continues. Menu-bar Quit and Command-Q quit management and remove its menu-bar icon; the independent **WallFlowPlayer** keeps playing videos, audio, and playlists and applying pause policies. Reopening Wallnamic reconnects to the running player without resetting playback.
 
 To stop playback, choose **停止壁纸并完全退出** (Stop wallpaper and completely quit) at the bottom of Settings. This stops the background player and saves the current video frame as the system wallpaper. If an app rule released the player, the assigned video's first frame is used. Relaunching after a complete exit restores assignments, audio, and pause settings without promising the exact previous playback position.
 
@@ -48,7 +50,7 @@ Install through Homebrew:
 brew install ffmpeg
 ```
 
-Alternatively, place an executable at `MediaTools/ffmpeg` beside the app. WallFlow also checks `/opt/homebrew/bin/ffmpeg` and `/usr/local/bin/ffmpeg`. FFmpeg and conversion caches are not included in this repository.
+Alternatively, place an executable at `MediaTools/ffmpeg` beside the app. Wallnamic also checks `/opt/homebrew/bin/ffmpeg` and `/usr/local/bin/ffmpeg`. FFmpeg and conversion caches are not included in this repository.
 
 ### SteamCMD and Workshop
 
@@ -84,7 +86,7 @@ For compatibility, settings remain under `~/Library/Application Support/VideoWal
 | `Runtime/` | Singleton lease, current player session, and shutdown requests; no account credentials |
 | `ExitWallpapers/` | Static frames installed as system wallpapers; older images may still be used by other Spaces |
 
-WebKit manages the web session; SteamCMD manages download login. WallFlow does not extract or copy passwords, cookies, or login tokens into the repository. Build output, media, tool folders, local settings, Steam sessions, logs, and common credentials are excluded by `.gitignore`.
+WebKit manages the web session; SteamCMD manages download login. Wallnamic does not extract or copy passwords, cookies, or login tokens into the repository. Build output, media, tool folders, local settings, Steam sessions, logs, and common credentials are excluded by `.gitignore`.
 
 ## Troubleshooting
 
@@ -98,7 +100,7 @@ WebKit manages the web session; SteamCMD manages download login. WallFlow does n
 | Wallpaper stays paused | Your power, occlusion, and per-app playback policies |
 | Playback continues after closing | Closing and management Quit preserve playback; use the complete-exit action in Settings |
 
-See [known issues](KNOWN_ISSUES.md) for validation limits. If the issue remains, use the [bug report form](https://github.com/luoshuang148/wallflow/issues/new?template=bug_report.yml), or the [help form](https://github.com/luoshuang148/wallflow/issues/new?template=question.yml) for usage questions. Remove account details, personal paths, credentials, and session data from attachments.
+See [known issues](KNOWN_ISSUES.md) for validation limits. If the issue remains, use the [bug report form](https://github.com/luoshuang148/wallnamic/issues/new?template=bug_report.yml), or the [help form](https://github.com/luoshuang148/wallnamic/issues/new?template=question.yml) for usage questions. Remove account details, personal paths, credentials, and session data from attachments.
 
 ## Uninstall
 

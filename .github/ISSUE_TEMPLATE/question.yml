@@ -5,14 +5,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        欢迎中文或英文。请先查看[中文指南](https://github.com/luoshuang148/wallflow/blob/main/docs/USER_GUIDE.md)或 [English guide](https://github.com/luoshuang148/wallflow/blob/main/docs/USER_GUIDE.en.md)。
+        欢迎中文或英文。请先查看[中文指南](https://github.com/luoshuang148/wallnamic/blob/main/docs/USER_GUIDE.md)或 [English guide](https://github.com/luoshuang148/wallnamic/blob/main/docs/USER_GUIDE.en.md)。
         Chinese and English are welcome. Please check the user guide first.
         请隐藏账号、个人路径和会话信息。 / Remove accounts, personal paths, and session data from attachments.
   - type: input
     id: environment
     attributes:
       label: 应用版本与设备 / App version and device
-      placeholder: WallFlow 0.9.3, macOS 14.x, Apple M2
+      placeholder: Wallnamic 0.9.3, macOS 14.x, Apple M2
     validations:
       required: true
   - type: textarea

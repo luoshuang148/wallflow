@@ -1,4 +1,4 @@
-# 参与 WallFlow / Contributing
+# 参与 Wallnamic / Contributing
 
 欢迎中文或英文 Issue 和 Pull Request。项目目前专注 macOS 视频壁纸；Scene、网页和程序壁纸属于不同的实现范围，大规模功能请先通过 Issue 讨论。
 
@@ -6,7 +6,7 @@
 
 ## 报告问题
 
-使用 [问题模板](https://github.com/luoshuang148/wallflow/issues/new/choose)，提供应用版本、macOS 版本、芯片、显示器数量、复现步骤、预期与实际结果。播放或转换问题请注明容器/编码、尺寸、声音选项及可选工具版本。
+使用 [问题模板](https://github.com/luoshuang148/wallnamic/issues/new/choose)，提供应用版本、macOS 版本、芯片、显示器数量、复现步骤、预期与实际结果。播放或转换问题请注明容器/编码、尺寸、声音选项及可选工具版本。
 
 请使用有权分享的最小样本。不要上传 Steam 密码、验证码、Cookie、登录令牌、`ssfn*`、Steam 配置、完整状态文件或个人壁纸。截图和日志中的账号名、用户名、媒体路径请先脱敏。漏洞按 [SECURITY.md](SECURITY.md) 私下报告。
 
@@ -39,7 +39,7 @@ The project currently focuses on macOS video wallpapers. Scene, web, and applica
 
 ### Report a problem
 
-Use the [issue forms](https://github.com/luoshuang148/wallflow/issues/new/choose). Include the app version, macOS version, chip, display count, reproduction steps, and expected and actual behavior. For playback or conversion, include container/codec, dimensions, audio settings, and relevant tool versions.
+Use the [issue forms](https://github.com/luoshuang148/wallnamic/issues/new/choose). Include the app version, macOS version, chip, display count, reproduction steps, and expected and actual behavior. For playback or conversion, include container/codec, dimensions, audio settings, and relevant tool versions.
 
 Only share minimal samples you have permission to distribute. Remove accounts, usernames, and personal paths from screenshots and logs. Never upload passwords, verification codes, cookies, tokens, `ssfn*`, Steam configuration, complete state files, or private wallpapers. Report vulnerabilities privately under [SECURITY.md](SECURITY.md).
 

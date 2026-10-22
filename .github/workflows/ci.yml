@@ -30,14 +30,14 @@ jobs:
       - name: Build and verify release app
         run: |
           ./build.sh
-          codesign --verify --deep --strict dist/WallFlow.app
-          file dist/WallFlow.app/Contents/MacOS/VideoWallpaper
+          codesign --verify --deep --strict dist/Wallnamic.app
+          file dist/Wallnamic.app/Contents/MacOS/VideoWallpaper
       - name: Archive CI app
-        run: ditto -c -k --norsrc --noextattr --keepParent dist/WallFlow.app dist/WallFlow-CI.zip
+        run: ditto -c -k --norsrc --noextattr --keepParent dist/Wallnamic.app dist/Wallnamic-CI.zip
       - name: Upload CI build
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: WallFlow-CI-${{ github.sha }}
-          path: dist/WallFlow-CI.zip
+          name: Wallnamic-CI-${{ github.sha }}
+          path: dist/Wallnamic-CI.zip
           if-no-files-found: error
           retention-days: 7
