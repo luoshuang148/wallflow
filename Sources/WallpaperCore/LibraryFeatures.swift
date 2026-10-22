@@ -48,17 +48,17 @@ public struct LibraryOrganization: Codable, Equatable {
 
     public mutating func renameGroup(_ id: String, name: String) throws {
         guard let index = groups.firstIndex(where: { $0.id == id }) else {
-            throw WallpaperError.message("找不到这个分组。")
+            throw WallpaperError.message(L("error.library.thisGroupCouldNotBeFound"))
         }
         groups[index].name = try validatedName(name, excluding: id)
     }
 
     private func validatedName(_ name: String, excluding id: String? = nil) throws -> String {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanName.isEmpty else { throw WallpaperError.message("请输入分组名称。") }
+        guard !cleanName.isEmpty else { throw WallpaperError.message(L("error.library.enterAGroupName")) }
         guard !groups.contains(where: { group in
             group.id != id && group.name.compare(cleanName, options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive]) == .orderedSame
-        }) else { throw WallpaperError.message("已经存在同名分组。") }
+        }) else { throw WallpaperError.message(L("error.library.aGroupWithThisNameAlreadyExists")) }
         return cleanName
     }
 
@@ -134,17 +134,17 @@ public struct PlaylistSettings: Codable, Equatable {
         switch mode {
         case .interval:
             guard Set(projectIDs).count >= 2, projectIDs.allSatisfy({ availableIDs.contains($0) }) else {
-                throw WallpaperError.message("轮播需要至少两张仍在壁纸库中的不同壁纸。")
+                throw WallpaperError.message(L("error.library.rotationRequiresAtLeastTwoDifferentWallpapersStill"))
             }
             guard (1...1440).contains(intervalMinutes) else {
-                throw WallpaperError.message("轮播间隔必须为 1 至 1440 分钟。")
+                throw WallpaperError.message(L("error.library.theRotationIntervalMustBeBetween1And"))
             }
         case .dayNight:
             guard let dayProjectID, let nightProjectID, availableIDs.contains(dayProjectID), availableIDs.contains(nightProjectID) else {
-                throw WallpaperError.message("请选择仍在壁纸库中的日间和夜间壁纸。")
+                throw WallpaperError.message(L("error.library.selectDaytimeAndNighttimeWallpapersThatAreStill"))
             }
             guard (0..<1440).contains(dayStartMinute), (0..<1440).contains(nightStartMinute), dayStartMinute != nightStartMinute else {
-                throw WallpaperError.message("日间和夜间开始时间必须有效且不能相同。")
+                throw WallpaperError.message(L("error.library.dayAndNightStartTimesMustBeValid"))
             }
         }
     }

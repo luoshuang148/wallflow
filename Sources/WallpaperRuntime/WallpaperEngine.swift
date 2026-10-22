@@ -74,13 +74,13 @@ private final class DesktopWindow: NSWindow {
         looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: URL(fileURLWithPath: project.videoPath)))
         observations.append(player.observe(\.status, options: [.new]) { [weak self] player, _ in
             guard player.status == .failed else { return }
-            let text = player.error?.localizedDescription ?? "视频播放失败。"
+            let text = player.error?.localizedDescription ?? L("error.playback.videoPlaybackFailed")
             Task { @MainActor in self?.handleFailure(text) }
         })
         if let looper {
             observations.append(looper.observe(\.status, options: [.new]) { [weak self] looper, _ in
                 guard looper.status == .failed else { return }
-                let text = looper.error?.localizedDescription ?? "视频循环播放失败。"
+                let text = looper.error?.localizedDescription ?? L("error.playback.videoLoopingFailed")
                 Task { @MainActor in self?.handleFailure(text) }
             })
         }
@@ -97,13 +97,13 @@ private final class DesktopWindow: NSWindow {
             if stopped { throw CancellationError() }
             if let failure { throw WallpaperError.message(failure) }
             if player.currentItem?.status == .failed {
-                throw WallpaperError.message(player.currentItem?.error?.localizedDescription ?? "视频解码失败。")
+                throw WallpaperError.message(player.currentItem?.error?.localizedDescription ?? L("error.playback.videoDecodingFailed"))
             }
-            if player.status == .failed || looper?.status == .failed { throw WallpaperError.message("视频播放器无法启动。") }
+            if player.status == .failed || looper?.status == .failed { throw WallpaperError.message(L("error.playback.theVideoPlayerCouldNotStart")) }
             if player.currentItem?.status == .readyToPlay && videoLayer.isReadyForDisplay { return }
             try await Task.sleep(for: .milliseconds(40))
         }
-        throw WallpaperError.message("播放器准备超时，请重新尝试。")
+        throw WallpaperError.message(L("error.playback.playerPreparationTimedOutTryAgain"))
     }
     func show() { installed = true; window.orderBack(nil) }
     func update(screen: NSScreen, fit: FitMode, playing: Bool) {
@@ -168,7 +168,7 @@ private final class DesktopWindow: NSWindow {
                       let project = state.projects.first(where: { $0.id == assignment.projectID }) else { continue }
                 if let existing = sessions[display.id], existing.projectID == project.id, existing.videoPath == project.videoPath { continue }
                 let fresh = try WallpaperProject.load(folder: URL(fileURLWithPath: project.folderPath))
-                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message("视频文件已改变，请重新导入。") }
+                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message(L("error.playback.theVideoFileHasChangedImportItAgain")) }
                 let session = WallpaperSession(project: fresh.identifyingSourceFolder(project.sourceFolderPath), fit: assignment.fit, screen: display.screen, onOcclusionChange: { [weak self] changed in
                     guard let self, self.sessions[display.id] === changed else { return }
                     self.applyPlayback()

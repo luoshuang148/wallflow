@@ -1,3 +1,4 @@
+import WallpaperCore
 import AppKit
 import Combine
 import ServiceManagement
@@ -42,7 +43,7 @@ extension LoginStartupService { func migrateLegacyRegistration() throws -> Login
         guard legacy.status == .enabled || legacy.status == .requiresApproval else { return .unchanged }
         if player.status != .enabled && player.status != .requiresApproval { try player.register() }
         guard player.status == .enabled || player.status == .requiresApproval else {
-            throw NSError(domain: "WallFlowLogin", code: 1, userInfo: [NSLocalizedDescriptionKey: "后台播放器登录启动尚未注册。"])
+            throw NSError(domain: "WallFlowLogin", code: 1, userInfo: [NSLocalizedDescriptionKey: L("error.startup.backgroundPlayerLaunchAtLoginIsNotRegistered")])
         }
         try legacy.unregister()
         return .enabled
@@ -97,7 +98,7 @@ extension LoginStartupService { func migrateLegacyRegistration() throws -> Login
                 preferences.set(true, forKey: optedOutKey)
             }
         }
-        catch { errorMessage = "无法迁移后台登录启动：\(error.localizedDescription)"; updateStatus(); return }
+        catch { errorMessage = String(format: L("error.startup.couldNotMigrateBackgroundLaunchAtLogin"), String(describing: error.localizedDescription)); updateStatus(); return }
         updateStatus()
         guard !preferences.bool(forKey: configuredKey) else { return }
         changeEnabled(true)
@@ -123,7 +124,7 @@ extension LoginStartupService { func migrateLegacyRegistration() throws -> Login
                 try service.unregister()
             }
         } catch {
-            errorMessage = "无法更改登录启动：\(error.localizedDescription)"
+            errorMessage = String(format: L("error.startup.couldNotChangeLaunchAtLogin"), String(describing: error.localizedDescription))
         }
         updateStatus()
     }
@@ -135,7 +136,7 @@ extension LoginStartupService { func migrateLegacyRegistration() throws -> Login
         enabled = status == .enabled
         needsApproval = status == .requiresApproval
         if status == .notFound && errorMessage == nil {
-            errorMessage = "系统未找到此应用的登录启动项。请将应用放入“应用程序”文件夹后重试。"
+            errorMessage = L("error.startup.theSystemCouldNotFindThisAppS")
         }
     }
 }

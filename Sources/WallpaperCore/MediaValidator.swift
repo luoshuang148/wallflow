@@ -8,19 +8,19 @@ public struct MediaInfo: Sendable {
 public enum MediaValidator {
     public static func validate(url: URL) async throws -> MediaInfo {
         guard FileManager.default.isReadableFile(atPath: url.path) else {
-            throw WallpaperError.message("视频文件已移动或无法读取，请重新导入壁纸文件夹。")
+            throw WallpaperError.message(L("error.media.theVideoFileHasMovedOrCannotBe"))
         }
         let asset = AVURLAsset(url: url)
         guard try await asset.load(.isPlayable) else {
-            throw WallpaperError.message("系统播放器不支持这段视频的编码。")
+            throw WallpaperError.message(L("error.media.theSystemPlayerDoesNotSupportThisVideo"))
         }
         let tracks = try await asset.loadTracks(withMediaType: .video)
-        guard let track = tracks.first else { throw WallpaperError.message("文件没有可播放的视频轨道。") }
+        guard let track = tracks.first else { throw WallpaperError.message(L("error.media.theFileHasNoPlayableVideoTrack")) }
         let size = try await track.load(.naturalSize)
         let transform = try await track.load(.preferredTransform)
         let dimensions = size.applying(transform)
         let duration = try await asset.load(.duration).seconds
-        guard duration.isFinite, duration > 0 else { throw WallpaperError.message("视频时长无效。") }
+        guard duration.isFinite, duration > 0 else { throw WallpaperError.message(L("error.media.theVideoDurationIsInvalid")) }
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 480, height: 480)

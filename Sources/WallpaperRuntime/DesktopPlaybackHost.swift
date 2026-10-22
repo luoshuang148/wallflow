@@ -93,7 +93,7 @@ import WallpaperCore
                 RunLoop.main.perform(inModes: [.default]) { [weak self] in self?.onStopRequested?() }
             }
         }
-        catch { model.errorMessage = "无法读取退出请求：\(error.localizedDescription)" }
+        catch { model.errorMessage = String(format: L("error.player.couldNotReadTheQuitRequest"), String(describing: error.localizedDescription)) }
     }
     public func publishStatus() throws {
         var displays: [String: PlayerDisplayStatus] = [:]

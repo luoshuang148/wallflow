@@ -40,11 +40,11 @@ import WallpaperCore
         preparation = Task { [weak self] in
             do {
                 let fresh = try WallpaperProject.load(folder:URL(fileURLWithPath:project.folderPath))
-                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message("视频路径已改变，请重新导入。") }
+                guard fresh.videoPath == project.videoPath else { throw WallpaperError.message(L("library.status.theVideoPathHasChangedImportItAgain")) }
                 let info = try await MediaValidator.validate(url:URL(fileURLWithPath:fresh.videoPath))
                 try Task.checkCancellation()
                 guard let self, self.visible, self.generation == ticket else { return }
-                guard info.width > 0, info.height > 0 else { throw WallpaperError.message("视频尺寸无效。") }
+                guard info.width > 0, info.height > 0 else { throw WallpaperError.message(L("error.preview.theVideoDimensionsAreInvalid")) }
                 let playback = PreviewPlayback(url:URL(fileURLWithPath:fresh.videoPath))
                 let player = playback.player, looper = playback.looper
                 self.aspectRatio = Double(info.width)/Double(info.height)
@@ -53,12 +53,12 @@ import WallpaperCore
                 self.observations = [
                     player.observe(\.status,options:[.new]) { [weak self, weak player] value,_ in
                         guard value.status == .failed else { return }
-                        let message = value.error?.localizedDescription ?? "预览播放失败。"
+                        let message = value.error?.localizedDescription ?? L("error.preview.previewPlaybackFailed")
                         Task { @MainActor in self?.failed(player:player,ticket:ticket,message:message) }
                     },
                     looper.observe(\.status,options:[.new]) { [weak self, weak player] value,_ in
                         guard value.status == .failed else { return }
-                        let message = value.error?.localizedDescription ?? "预览循环失败。"
+                        let message = value.error?.localizedDescription ?? L("error.preview.previewLoopingFailed")
                         Task { @MainActor in self?.failed(player:player,ticket:ticket,message:message) }
                     }
                 ]

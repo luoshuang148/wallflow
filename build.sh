@@ -4,6 +4,10 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="${WALLFLOW_BUILD_DIR:-$PROJECT_DIR/.build}"
 APP_DIR="${WALLFLOW_APP_DIR:-$PROJECT_DIR/dist/WallFlow.app}"
 
+if [ "${WALLFLOW_CHECK_LOCALIZATION:-1}" != "0" ]; then
+    python3 "$PROJECT_DIR/scripts/check_localization.py"
+fi
+
 swift build --package-path "$PROJECT_DIR" --scratch-path "$BUILD_DIR" -c release --product VideoWallpaper
 swift build --package-path "$PROJECT_DIR" --scratch-path "$BUILD_DIR" -c release --product WallFlowPlayer
 BIN_DIR="$(swift build --package-path "$PROJECT_DIR" --scratch-path "$BUILD_DIR" -c release --show-bin-path)"
@@ -29,6 +33,10 @@ done
 if [ -f "$PROJECT_DIR/Resources/AppIcon.icns" ]; then
     cp "$PROJECT_DIR/Resources/AppIcon.icns" "$PLAYER_APP/Contents/Resources/AppIcon.icns"
 fi
+for LANGUAGE in zh-Hans en; do
+    cp -R "$PROJECT_DIR/Resources/$LANGUAGE.lproj" "$STAGED_APP/Contents/Resources/"
+    cp -R "$PROJECT_DIR/Resources/$LANGUAGE.lproj" "$PLAYER_APP/Contents/Resources/"
+done
 codesign --force --sign - "$PLAYER_APP"
 codesign --verify --strict "$PLAYER_APP"
 codesign --force --sign - "$STAGED_APP"

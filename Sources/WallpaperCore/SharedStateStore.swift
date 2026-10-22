@@ -9,9 +9,9 @@ public enum SharedStateStore {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let lockURL = url.appendingPathExtension("lock")
         let fd = Darwin.open(lockURL.path, O_CREAT | O_RDWR | O_NOFOLLOW | O_CLOEXEC, S_IRUSR | S_IWUSR)
-        guard fd >= 0 else { throw WallpaperError.message("无法锁定壁纸设置。") }
+        guard fd >= 0 else { throw WallpaperError.message(L("error.settings.couldNotLockWallpaperSettings")) }
         defer { flock(fd, LOCK_UN); Darwin.close(fd) }
-        guard flock(fd, LOCK_EX) == 0 else { throw WallpaperError.message("无法锁定壁纸设置。") }
+        guard flock(fd, LOCK_EX) == 0 else { throw WallpaperError.message(L("error.settings.couldNotLockWallpaperSettings")) }
         let current = try StateStore.load(from: url)
         try validate(current)
         let encoder = JSONEncoder()
@@ -41,6 +41,6 @@ public enum SharedStateStore {
             }
             return result
         }
-        throw WallpaperError.message("\(path) 已在后台更新，请等待同步后重试。")
+        throw WallpaperError.message(String(format: L("error.settings.wasUpdatedInTheBackgroundWaitForSynchronization"), String(describing: L("library.settings") + path.dropFirst("设置".count))))
     }
 }

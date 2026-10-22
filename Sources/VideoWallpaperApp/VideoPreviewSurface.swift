@@ -1,3 +1,4 @@
+import WallpaperCore
 import AppKit
 import SwiftUI
 import AVFoundation
@@ -29,7 +30,7 @@ final class PreviewSurfaceView: NSView {
         videoLayer.videoGravity = .resizeAspect
         videoLayer.backgroundColor = NSColor.clear.cgColor
         layer = videoLayer
-        setAccessibilityLabel("动态壁纸预览")
+        setAccessibilityLabel(L("preview.liveWallpaperPreview"))
     }
     required init?(coder:NSCoder) { fatalError("init(coder:) has not been implemented") }
     override func layout() {

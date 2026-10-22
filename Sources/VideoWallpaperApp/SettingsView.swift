@@ -1,3 +1,4 @@
+import WallpaperCore
 import SwiftUI
 import WallpaperRuntime
 
@@ -7,24 +8,24 @@ struct SettingsView: View {
     @ObservedObject var exit: ManagementExitCoordinator
     @Environment(\.dismiss) private var dismiss
     @State private var page: Page = .library
-    private enum Page: String, CaseIterable {
-        case library = "壁纸库与自动播放"
-        case performance = "性能与电源"
+    private enum Page: CaseIterable {
+        case library, performance
+        var title: String { self == .library ? L("settings.libraryAutoplay") : L("library.performancePower") }
         var symbol: String { self == .library ? "slider.horizontal.3" : "leaf" }
     }
     var body: some View {
         VStack(spacing:12) {
             HStack {
-                Text("设置").font(.title2.weight(.semibold))
+                Text(L("library.settings")).font(.title2.weight(.semibold))
                 Spacer()
-                Button("完成") { dismiss() }.keyboardShortcut(.defaultAction)
+                Button(L("settings.done")) { dismiss() }.keyboardShortcut(.defaultAction)
             }
             Divider()
             HStack(alignment:.top,spacing:0) {
                 VStack(spacing:8) {
                     ForEach(Page.allCases,id:\.self) { item in
                         Button { page = item } label: {
-                            Label(item.rawValue,systemImage:item.symbol)
+                            Label(item.title,systemImage:item.symbol)
                                 .font(.system(size:12,weight:.medium))
                                 .frame(maxWidth:.infinity,alignment:.leading).padding(12)
                                 .contentShape(Rectangle())
@@ -49,7 +50,7 @@ struct SettingsView: View {
                     if let error = exit.errorMessage { Text(error).foregroundStyle(.orange).textSelection(.enabled) }
                 }.font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button(exit.isExiting ? "正在停止壁纸…" : "停止壁纸并完全退出") {
+                Button(exit.isExiting ? L("settings.stoppingWallpapers") : L("settings.stopWallpapersAndQuitCompletely")) {
                     Task { await exit.stopWallpaperAndExit() }
                 }.disabled(exit.isExiting)
             }

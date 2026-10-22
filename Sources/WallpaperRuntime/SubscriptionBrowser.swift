@@ -9,14 +9,14 @@ public struct SubscriptionPage {
     public let end: Int
     public let next: URL?
     public static func decode(_ raw: Any) throws -> SubscriptionPage {
-        guard let d = raw as? [String: Any] else { throw WallpaperError.message("无法读取订阅页面。") }
-        if let error = d["error"] as? String { throw WallpaperError.message(error) }
+        guard let d = raw as? [String: Any] else { throw WallpaperError.message(L("workshop.subscriptions.couldNotReadTheSubscriptionsPage")) }
+        if let error = d["error"] as? String { throw WallpaperError.message(L(error)) }
         guard let values = d["ids"] as? [String], let total = d["total"] as? Int, let end = d["end"] as? Int,
-              total >= 0, total <= 10000, end <= total else { throw WallpaperError.message("订阅页面结构无法识别。") }
+              total >= 0, total <= 10000, end <= total else { throw WallpaperError.message(L("workshop.subscriptions.theSubscriptionsPageStructureIsUnrecognized")) }
         let ids = try values.map(WorkshopID.init)
         let next = (d["next"] as? String).flatMap(URL.init(string:))
         guard Set(ids).count == ids.count, (end == total || next != nil),
-              next == nil || SubscriptionBrowser.isSubscriptionURL(next!) else { throw WallpaperError.message("订阅分页不完整，未替换列表。") }
+              next == nil || SubscriptionBrowser.isSubscriptionURL(next!) else { throw WallpaperError.message(L("workshop.subscriptions.subscriptionPaginationIsIncompleteTheListWasKept")) }
         return SubscriptionPage(ids: ids, total: total, end: end, next: next)
     }
     public static let script = #"""
@@ -24,7 +24,7 @@ public struct SubscriptionPage {
       const error = message => ({error: message});
       const url = new URL(document.baseURI);
       if (url.hostname !== 'steamcommunity.com' || !/\/(my|id\/[^/]+|profiles\/\d+)\/myworkshopfiles\/?$/.test(url.pathname) || url.searchParams.get('appid') !== '431960' || url.searchParams.get('browsefilter') !== 'mysubscriptions')
-        return error('请先在官方 Steam 页面登录，然后点击“回到我的订阅”。');
+        return error('workshop.subscriptions.pageSignInRequired');
       const empty = document.querySelector('#no_items .inventory_msg_content');
       if (empty && /No matching files were found/i.test(empty.textContent)) return {ids: [], total: 0, end: 0, next: null};
       const root = document.querySelector('.workshopBrowseItems');
@@ -32,20 +32,20 @@ public struct SubscriptionPage {
       const subscriptions = [...document.querySelectorAll('.workshopItemSubscription')];
       const rows = subscriptions.length ? subscriptions : [...(root?.querySelectorAll('.workshopItem') || [])];
       const info = document.querySelector('.workshopBrowsePagingInfo');
-      if (!rows.length || !info) return error('页面尚未加载完成、登录已过期，或 Steam 页面结构已变化。请确认看到自己的订阅列表后重试。');
+      if (!rows.length || !info) return error('workshop.subscriptions.pageNotReady');
       const range = info.textContent.match(/Showing\s+([\d,]+)\s*[-–]\s*([\d,]+)\s+of\s+([\d,]+)\s+entries/i);
-      if (!range) return error('无法识别订阅总数。请通过“回到我的订阅”加载英文页面后重试。');
+      if (!range) return error('workshop.subscriptions.pageCountUnrecognized');
       const start = Number(range[1].replaceAll(',', '')), end = Number(range[2].replaceAll(',', '')), total = Number(range[3].replaceAll(',', ''));
       const ids = [...new Set(rows.flatMap(row => [...row.querySelectorAll('a[href]')]).flatMap(a => {
         const u = new URL(a.href, document.baseURI);
         const id = u.searchParams.get('id');
         return u.hostname === 'steamcommunity.com' && /^\/(sharedfiles|workshop)\/filedetails\/?$/.test(u.pathname) && /^[0-9]+$/.test(id || '') ? [id] : [];
       }))];
-      if (ids.length !== end-start+1 || start < 1 || end > total) return error('当前页作品数量不完整，未替换列表。请稍后重试。');
+      if (ids.length !== end-start+1 || start < 1 || end > total) return error('workshop.subscriptions.pageIncomplete');
       const current = Number(url.searchParams.get('p') || '1');
       const links = [...document.querySelectorAll('.workshopBrowsePagingControls a[href]')].map(a => new URL(a.href, document.baseURI));
       const next = links.find(u => u.hostname === url.hostname && u.pathname === url.pathname && u.searchParams.get('appid') === '431960' && u.searchParams.get('browsefilter') === 'mysubscriptions' && Number(u.searchParams.get('p')) === current+1);
-      if (end < total && !next) return error('无法找到下一页，未替换订阅列表。');
+      if (end < total && !next) return error('workshop.subscriptions.pageNextMissing');
       return {ids, total, end, next: end < total ? next.href : null};
     })()
     """#
@@ -56,7 +56,7 @@ public struct SubscriptionPage {
     public let webView: WKWebView
     @Published public private(set) var address = home.absoluteString
     @Published public private(set) var isReading = false
-    @Published public private(set) var status = "在官方 Steam 网页登录后，回到我的订阅并读取。"
+    @Published public private(set) var status = L("workshop.subscriptions.signInOnTheOfficialSteamWebsiteThen")
     @Published public var errorMessage: String?
     private var navigationError: String?
     private var task: Task<Void, Never>?
@@ -90,26 +90,26 @@ public struct SubscriptionPage {
                 var visited = Set<String>(); var all: [WorkshopID] = []; var expectedTotal: Int?
                 for pageNumber in 1...100 {
                     try Task.checkCancellation()
-                    guard let target = next, visited.insert(target.absoluteString).inserted else { throw WallpaperError.message("订阅分页出现循环，未替换列表。") }
-                    self.status = "正在读取第 \(pageNumber) 页，已取得 \(all.count) 项…"
+                    guard let target = next, visited.insert(target.absoluteString).inserted else { throw WallpaperError.message(L("workshop.subscriptions.subscriptionPaginationLoopsTheListWasKept")) }
+                    self.status = String(format: L("workshop.subscriptions.readingPageItemsCollected"), String(describing: pageNumber), String(describing: all.count))
                     try await self.navigate(target)
                     let raw = try await self.webView.evaluateJavaScript(SubscriptionPage.script)
                     let page = try SubscriptionPage.decode(raw)
-                    if let expectedTotal, expectedTotal != page.total { throw WallpaperError.message("订阅数量在读取期间发生变化，请重新读取。") }
+                    if let expectedTotal, expectedTotal != page.total { throw WallpaperError.message(L("workshop.subscriptions.theSubscriptionCountChangedWhileReadingReadThe")) }
                     expectedTotal = page.total
                     all += page.ids
-                    guard Set(all).count == all.count, all.count == page.end else { throw WallpaperError.message("订阅分页有重复或遗漏，请重新读取。") }
+                    guard Set(all).count == all.count, all.count == page.end else { throw WallpaperError.message(L("workshop.subscriptions.subscriptionPagesContainDuplicatesOrMissingItemsRead")) }
                     next = page.next
                     if next == nil {
-                        guard all.count == page.total else { throw WallpaperError.message("订阅列表不完整，请重新读取。") }
+                        guard all.count == page.total else { throw WallpaperError.message(L("workshop.subscriptions.theSubscriptionListIsIncompleteReadItAgain")) }
                         try Task.checkCancellation()
-                        self.status = "已完整读取 \(all.count) 项订阅。"
+                        self.status = String(format: L("workshop.subscriptions.readAllSubscriptions"), String(describing: all.count))
                         completion(all); return
                     }
                 }
-                throw WallpaperError.message("订阅超过 100 页，本次未完成，已保留之前的列表。")
-            } catch is CancellationError { self.status = "已取消读取。" }
-            catch { self.errorMessage = error.localizedDescription; self.status = "读取未完成，之前的列表保留。" }
+                throw WallpaperError.message(L("workshop.subscriptions.subscriptionsExceed100PagesReadingDidNotFinish"))
+            } catch is CancellationError { self.status = L("workshop.subscriptions.readingCancelled") }
+            catch { self.errorMessage = error.localizedDescription; self.status = L("workshop.subscriptions.readingDidNotFinishThePreviousListWas") }
         }
     }
     private func navigate(_ url: URL) async throws {
@@ -121,11 +121,11 @@ public struct SubscriptionPage {
             try Task.checkCancellation()
             if let navigationError { throw WallpaperError.message(navigationError) }
             if !webView.isLoading {
-                guard let actual = webView.url, Self.isSubscriptionURL(actual) else { throw WallpaperError.message("请先在官方 Steam 页面登录，再点击“回到我的订阅”。") }
+                guard let actual = webView.url, Self.isSubscriptionURL(actual) else { throw WallpaperError.message(L("workshop.subscriptions.signInOnTheOfficialSteamWebsiteFirst")) }
                 try await Task.sleep(for: .milliseconds(500)); return
             }
         } while Date() < deadline
-        webView.stopLoading(); throw WallpaperError.message("Steam 订阅页面加载超时，请检查网络后重试。")
+        webView.stopLoading(); throw WallpaperError.message(L("workshop.subscriptions.theSteamSubscriptionsPageTimedOutCheckYour"))
     }
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url, Self.isOfficial(url) else { decisionHandler(.cancel); return }
@@ -136,7 +136,7 @@ public struct SubscriptionPage {
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { record(error) }
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { record(error) }
     private func record(_ error: Error) {
-        if (error as NSError).code != NSURLErrorCancelled { navigationError = "Steam 页面加载失败：\(error.localizedDescription)"; errorMessage = navigationError }
+        if (error as NSError).code != NSURLErrorCancelled { navigationError = String(format: L("workshop.subscriptions.steamPageFailedToLoad"), String(describing: error.localizedDescription)); errorMessage = navigationError }
     }
     public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         if let url = navigationAction.request.url, Self.isOfficial(url) { webView.load(navigationAction.request) }

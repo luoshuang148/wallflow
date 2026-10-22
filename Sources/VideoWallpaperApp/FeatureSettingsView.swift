@@ -18,12 +18,12 @@ struct FeatureSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("壁纸库与自动播放").font(.title2.weight(.semibold))
+            Text(L("settings.libraryAutoplay")).font(.title2.weight(.semibold))
             TabView {
-                groupsTab.tabItem { Label("分组", systemImage: "folder") }
-                playlistTab.tabItem { Label("轮播与日夜", systemImage: "repeat") }
-                rulesTab.tabItem { Label("应用规则", systemImage: "app.badge") }
-                startupTab.tabItem { Label("登录启动", systemImage: "power") }
+                groupsTab.tabItem { Label(L("settings.groups"), systemImage: "folder") }
+                playlistTab.tabItem { Label(L("settings.rotationDayNight"), systemImage: "repeat") }
+                rulesTab.tabItem { Label(L("settings.applicationRules"), systemImage: "app.badge") }
+                startupTab.tabItem { Label(L("settings.launchAtLogin"), systemImage: "power") }
             }
             if let error = model.errorMessage {
                 Text(error).font(.caption).foregroundStyle(.orange).lineLimit(3).textSelection(.enabled)
@@ -31,7 +31,7 @@ struct FeatureSettingsView: View {
             if !embedded {
                 HStack {
                     Spacer()
-                    Button("完成") { dismiss() }.keyboardShortcut(.defaultAction)
+                    Button(L("settings.done")) { dismiss() }.keyboardShortcut(.defaultAction)
                 }
             }
         }
@@ -55,24 +55,24 @@ struct FeatureSettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    TextField("新分组名称", text: $newGroupName).textFieldStyle(.roundedBorder)
+                    TextField(L("settings.newGroupName"), text: $newGroupName).textFieldStyle(.roundedBorder)
                         .onSubmit(addGroup)
-                    Button("添加分组", action: addGroup)
+                    Button(L("settings.addGroup"), action: addGroup)
                         .disabled(newGroupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 if model.state.organization.groups.isEmpty {
-                    Text("暂无分组")
+                    Text(L("settings.noGroupsYet"))
                         .font(.callout).foregroundStyle(.secondary).padding(.vertical, 20)
                 }
                 ForEach(model.state.organization.groups) { group in
                     HStack(spacing: 10) {
                         Image(systemName: "folder").foregroundStyle(.secondary)
-                        TextField("分组名称", text: Binding(
+                        TextField(L("settings.groupName"), text: Binding(
                             get: { groupNames[group.id] ?? group.name },
                             set: { groupNames[group.id] = $0 }
                         )).textFieldStyle(.roundedBorder)
-                        Button("重命名") { renameGroup(group.id) }
-                        Button("删除", role: .destructive) {
+                        Button(L("settings.rename")) { renameGroup(group.id) }
+                        Button(L("settings.delete"), role: .destructive) {
                             var value = model.state.organization
                             value.deleteGroup(group.id)
                             model.setOrganization(value)
@@ -87,20 +87,20 @@ struct FeatureSettingsView: View {
     private var playlistTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Toggle("启用自动切换", isOn: $playlist.enabled).toggleStyle(.switch)
-                Picker("切换方式", selection: $playlist.mode) {
-                    Text("按间隔轮播").tag(PlaylistMode.interval)
-                    Text("按日夜切换").tag(PlaylistMode.dayNight)
+                Toggle(L("settings.enableAutomaticSwitching"), isOn: $playlist.enabled).toggleStyle(.switch)
+                Picker(L("settings.switchingMode"), selection: $playlist.mode) {
+                    Text(L("settings.rotateAtIntervals")).tag(PlaylistMode.interval)
+                    Text(L("settings.switchByDayNight")).tag(PlaylistMode.dayNight)
                 }.pickerStyle(.segmented)
                 displayPicker
                 if playlist.mode == .interval { intervalOptions }
                 else { dayNightOptions }
                 HStack {
                     if playlistSaved {
-                        Label("轮播设置已保存", systemImage: "checkmark.circle").font(.caption).foregroundStyle(.secondary)
+                        Label(L("settings.rotationSettingsSaved"), systemImage: "checkmark.circle").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button("保存轮播设置") {
+                    Button(L("settings.saveRotationSettings")) {
                         model.setPlaylist(playlist)
                         playlistSaved = model.state.playlist == playlist
                     }.buttonStyle(.borderedProminent).disabled(model.isBusy)
@@ -110,11 +110,11 @@ struct FeatureSettingsView: View {
     }
 
     private var displayPicker: some View {
-        Picker("切换屏幕", selection: $playlist.targetDisplayID) {
-            Text("所有屏幕").tag(nil as String?)
+        Picker(L("settings.targetDisplay"), selection: $playlist.targetDisplayID) {
+            Text(L("settings.allDisplays")).tag(nil as String?)
             ForEach(model.displays) { display in Text(display.name).tag(Optional(display.id)) }
             if let id = playlist.targetDisplayID, !model.displays.contains(where: { $0.id == id }) {
-                Text("暂未连接的屏幕").tag(Optional(id))
+                Text(L("settings.disconnectedDisplay")).tag(Optional(id))
             }
         }
     }
@@ -122,19 +122,19 @@ struct FeatureSettingsView: View {
     private var intervalOptions: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("切换间隔")
-                TextField("分钟", value: $playlist.intervalMinutes, format: .number)
+                Text(L("settings.switchingInterval"))
+                TextField(L("settings.minutes"), value: $playlist.intervalMinutes, format: .number)
                     .textFieldStyle(.roundedBorder).frame(width: 70)
-                Text("分钟（1–1440）").foregroundStyle(.secondary)
+                Text(L("settings.intervalMinutesRange")).foregroundStyle(.secondary)
                 Spacer()
             }
-            Picker("播放顺序", selection: $playlist.order) {
-                Text("按列表顺序").tag(PlaylistOrder.sequential)
-                Text("随机播放").tag(PlaylistOrder.random)
+            Picker(L("settings.playbackOrder"), selection: $playlist.order) {
+                Text(L("settings.inListOrder")).tag(PlaylistOrder.sequential)
+                Text(L("settings.shuffle")).tag(PlaylistOrder.random)
             }
-            Text("选择至少两张壁纸").font(.callout.weight(.medium))
+            Text(L("settings.selectAtLeastTwoWallpapers")).font(.callout.weight(.medium))
             if model.state.projects.isEmpty {
-                Text("请先导入壁纸。") .font(.callout).foregroundStyle(.secondary)
+                Text(L("settings.importWallpapersFirst")) .font(.callout).foregroundStyle(.secondary)
             }
             ForEach(model.state.projects) { project in
                 Toggle(model.displayName(for:project), isOn: Binding(
@@ -151,20 +151,20 @@ struct FeatureSettingsView: View {
 
     private var dayNightOptions: some View {
         VStack(alignment: .leading, spacing: 14) {
-            projectPicker("日间壁纸", selection: $playlist.dayProjectID)
-            DatePicker("日间开始", selection: timeBinding(\.dayStartMinute), displayedComponents: .hourAndMinute)
+            projectPicker(L("settings.daytimeWallpaper"), selection: $playlist.dayProjectID)
+            DatePicker(L("settings.dayStarts"), selection: timeBinding(\.dayStartMinute), displayedComponents: .hourAndMinute)
             Divider()
-            projectPicker("夜间壁纸", selection: $playlist.nightProjectID)
-            DatePicker("夜间开始", selection: timeBinding(\.nightStartMinute), displayedComponents: .hourAndMinute)
+            projectPicker(L("settings.nighttimeWallpaper"), selection: $playlist.nightProjectID)
+            DatePicker(L("settings.nightStarts"), selection: timeBinding(\.nightStartMinute), displayedComponents: .hourAndMinute)
         }
     }
 
     private func projectPicker(_ title: String, selection: Binding<String?>) -> some View {
         Picker(title, selection: selection) {
-            Text("请选择壁纸").tag(nil as String?)
+            Text(L("settings.selectAWallpaper")).tag(nil as String?)
             ForEach(model.state.projects) { project in Text(model.displayName(for:project)).tag(Optional(project.id)) }
             if let id = selection.wrappedValue, !model.state.projects.contains(where: { $0.id == id }) {
-                Text("壁纸已移除，请重新选择").tag(Optional(id))
+                Text(L("settings.wallpaperRemovedSelectAnother")).tag(Optional(id))
             }
         }
     }
@@ -184,10 +184,10 @@ struct FeatureSettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Spacer()
-                    Button("添加应用…", action: addApplication)
+                    Button(L("settings.addApplication"), action: addApplication)
                 }
                 if model.state.applicationRules.isEmpty {
-                    Text("暂无应用规则")
+                    Text(L("settings.noApplicationRulesYet"))
                         .font(.callout).foregroundStyle(.secondary).padding(.vertical, 20)
                 }
                 ForEach(model.state.applicationRules) { rule in ruleRow(rule) }
@@ -200,19 +200,19 @@ struct FeatureSettingsView: View {
             HStack {
                 Toggle(rule.name, isOn: ruleBinding(rule.id, \.enabled, fallback: rule.enabled)).toggleStyle(.checkbox)
                 Spacer()
-                Button("删除", role: .destructive) {
+                Button(L("settings.delete"), role: .destructive) {
                     model.setApplicationRules(model.state.applicationRules.filter { $0.id != rule.id })
                 }
             }
             HStack(spacing: 14) {
-                Picker("当应用", selection: ruleBinding(rule.id, \.condition, fallback: rule.condition)) {
-                    Text("正在运行").tag(ApplicationRuleCondition.running)
-                    Text("位于前台").tag(ApplicationRuleCondition.frontmost)
+                Picker(L("settings.whenApplication"), selection: ruleBinding(rule.id, \.condition, fallback: rule.condition)) {
+                    Text(L("settings.isRunning")).tag(ApplicationRuleCondition.running)
+                    Text(L("settings.isInForeground")).tag(ApplicationRuleCondition.frontmost)
                 }
-                Picker("壁纸", selection: ruleBinding(rule.id, \.action, fallback: rule.action)) {
-                    Text("静音").tag(ApplicationRuleAction.mute)
-                    Text("暂停").tag(ApplicationRuleAction.pause)
-                    Text("停止并释放资源").tag(ApplicationRuleAction.stop)
+                Picker(L("settings.wallpaper"), selection: ruleBinding(rule.id, \.action, fallback: rule.action)) {
+                    Text(L("settings.mute")).tag(ApplicationRuleAction.mute)
+                    Text(L("settings.pause")).tag(ApplicationRuleAction.pause)
+                    Text(L("settings.stopAndFreeResources")).tag(ApplicationRuleAction.stop)
                 }
             }
         }.padding(12).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
@@ -231,16 +231,16 @@ struct FeatureSettingsView: View {
 
     private var startupTab: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Toggle("登录 Mac 后自动播放壁纸", isOn: Binding(
+            Toggle(L("settings.playWallpapersAutomaticallyAfterLoggingInToYour"), isOn: Binding(
                 get: { startup.enabled || startup.needsApproval },
                 set: { startup.setEnabled($0) }
             )).toggleStyle(.switch)
             if startup.needsApproval {
-                Label("需要在系统设置中允许登录启动", systemImage: "exclamationmark.circle")
+                Label(L("settings.allowLaunchAtLoginInSystemSettings"), systemImage: "exclamationmark.circle")
                     .foregroundStyle(.orange)
-                Button("打开登录项设置") { startup.openSettings() }
+                Button(L("settings.openLoginItemsSettings")) { startup.openSettings() }
             } else {
-                Label(startup.enabled ? "已启用登录启动" : "登录启动已关闭", systemImage: startup.enabled ? "checkmark.circle" : "minus.circle")
+                Label(startup.enabled ? L("settings.launchAtLoginEnabled") : L("settings.launchAtLoginDisabled"), systemImage: startup.enabled ? "checkmark.circle" : "minus.circle")
                     .font(.callout).foregroundStyle(.secondary)
             }
             if let error = startup.errorMessage {
@@ -272,8 +272,8 @@ struct FeatureSettingsView: View {
 
     private func addApplication() {
         let panel = NSOpenPanel()
-        panel.title = "选择应用"
-        panel.prompt = "添加规则"
+        panel.title = L("settings.selectApplication")
+        panel.prompt = L("settings.addRule")
         panel.allowedContentTypes = [.applicationBundle]
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -283,7 +283,7 @@ struct FeatureSettingsView: View {
             guard response == .OK, let url = panel.url else { return }
             Task { @MainActor in
                 guard let bundle = Bundle(url: url), let id = bundle.bundleIdentifier, !id.isEmpty else {
-                    model.errorMessage = "无法识别所选应用，请选择有效的 Mac 应用。"
+                    model.errorMessage = L("settings.theSelectedApplicationCouldNotBeIdentifiedSelect")
                     return
                 }
                 let name = (bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)

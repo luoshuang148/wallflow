@@ -46,13 +46,13 @@ public struct BackgroundPlayerPaths {
     public init(stateURL: URL) { self.stateURL = stateURL }
     func prepareDirectory() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-        guard chmod(directory.path, 0o700) == 0 else { throw WallpaperError.message("无法保护后台播放器目录。") }
+        guard chmod(directory.path, 0o700) == 0 else { throw WallpaperError.message(L("error.player.couldNotSecureTheBackgroundPlayerDirectory")) }
     }
     private func write<T: Encodable>(_ value: T, name: String) throws {
         try prepareDirectory()
         let url = directory.appendingPathComponent(name)
         try JSONEncoder().encode(value).write(to: url, options: .atomic)
-        guard chmod(url.path, 0o600) == 0 else { throw WallpaperError.message("无法保护后台播放器状态。") }
+        guard chmod(url.path, 0o600) == 0 else { throw WallpaperError.message(L("error.player.couldNotSecureTheBackgroundPlayerState")) }
     }
     public func writeStatus(_ value: PlayerStatus) throws { try write(value, name: "status.json") }
     public func readStatus() throws -> PlayerStatus? {
@@ -91,11 +91,11 @@ public final class PlayerLease {
     static func acquire(_ paths: BackgroundPlayerPaths, recordingOwnership: Bool) throws -> PlayerLease? {
         try paths.prepareDirectory()
         let fd = Darwin.open(paths.directory.appendingPathComponent("player.lock").path, O_CREAT | O_RDWR | O_NOFOLLOW | O_CLOEXEC, S_IRUSR | S_IWUSR)
-        guard fd >= 0 else { throw WallpaperError.message("无法锁定后台播放器。") }
+        guard fd >= 0 else { throw WallpaperError.message(L("error.player.couldNotLockTheBackgroundPlayer")) }
         guard flock(fd, LOCK_EX | LOCK_NB) == 0 else {
             let saved = errno; Darwin.close(fd)
             if saved == EWOULDBLOCK { return nil }
-            throw WallpaperError.message("无法锁定后台播放器。")
+            throw WallpaperError.message(L("error.player.couldNotLockTheBackgroundPlayer"))
         }
         let lease = PlayerLease(fd: fd)
         if recordingOwnership {
@@ -126,10 +126,11 @@ public final class PlayerLease {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "development"
         self.init(paths: BackgroundPlayerPaths(stateURL: stateURL), build: build, parentAppPath: appURL.path, timeout: 30) {
             let helper = appURL.appendingPathComponent("Contents/Library/LoginItems/WallFlowPlayer.app")
-            guard FileManager.default.fileExists(atPath: helper.path) else { throw WallpaperError.message("找不到后台播放器，请使用完整的 WallFlow.app。") }
+            guard FileManager.default.fileExists(atPath: helper.path) else { throw WallpaperError.message(L("error.player.backgroundPlayerNotFoundUseTheCompleteWallFlow")) }
             let config = NSWorkspace.OpenConfiguration()
             config.activates = false
-            config.arguments = ["--wallflow-state", stateURL.path]
+            config.arguments = ["--wallflow-state", stateURL.path,
+                                "-AppleLanguages", "(\(Bundle.main.preferredLocalizations.first ?? "zh-Hans"))"]
             _ = try await NSWorkspace.shared.openApplication(at: helper, configuration: config)
         }
     }
@@ -145,7 +146,7 @@ public final class PlayerLease {
     }
     private func checkCompatibility(_ value: PlayerStatus) throws {
         guard value.build == build, parentAppPath == nil || value.parentAppPath == parentAppPath else {
-            throw WallpaperError.message("另一个版本或位置的后台播放器仍在运行。请先“停止壁纸并完全退出”，再打开新版。")
+            throw WallpaperError.message(L("error.player.aBackgroundPlayerFromAnotherVersionOrLocation"))
         }
     }
     public func refreshStatus() throws {
@@ -162,14 +163,14 @@ public final class PlayerLease {
                 try checkCompatibility(value)
                 status = value; lastVerifiedStatus = value
                 if value.phase == .ready { return }
-                if value.phase == .stopping { throw WallpaperError.message("后台播放器正在退出，请稍后重新打开。") }
+                if value.phase == .stopping { throw WallpaperError.message(L("error.player.theBackgroundPlayerIsQuittingOpenTheApp")) }
             }
             try await Task.sleep(for: .milliseconds(50))
         } while Date() < deadline
-        throw WallpaperError.message("后台播放器启动超时，请重新打开 WallFlow 或检查后台进程。")
+        throw WallpaperError.message(L("error.player.backgroundPlayerStartupTimedOutOpenWallFlowAgain"))
     }
     public func stopAndWait(expectedSession: UUID? = nil) async throws {
-        guard !isStopping else { throw WallpaperError.message("正在等待后台播放器退出。") }
+        guard !isStopping else { throw WallpaperError.message(L("error.player.waitingForTheBackgroundPlayerToQuit")) }
         isStopping = true
         defer { isStopping = false }
         let owned = try paths.hasOwner()
@@ -177,10 +178,10 @@ public final class PlayerLease {
         // A stopped notification arrives before process disappearance; keep the last verified identity.
         guard let current = active ?? (owned ? nil : lastVerifiedStatus) else {
             if !owned && expectedSession == nil { status = nil; return }
-            throw WallpaperError.message("后台播放器仍在运行或无法确认退出状态。请重新打开 WallFlow，在设置中重试完全退出。")
+            throw WallpaperError.message(L("error.player.theBackgroundPlayerIsStillRunningOrIts"))
         }
         if let expectedSession, current.sessionID != expectedSession {
-            throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
+            throw WallpaperError.message(L("error.player.theBackgroundPlayerRestartedRetryQuittingCompletely"))
         }
         status = current; lastVerifiedStatus = current
         // Complete exit must also be able to stop an older build before an update.
@@ -189,14 +190,14 @@ public final class PlayerLease {
         repeat {
             let ownedNow = try paths.hasOwner()
             if ownedNow, let owner = try paths.readOwnership(), owner.sessionID != current.sessionID {
-                throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
+                throw WallpaperError.message(L("error.player.theBackgroundPlayerRestartedRetryQuittingCompletely"))
             }
             if let other = try paths.readStatus(), other.sessionID != current.sessionID {
-                throw WallpaperError.message("后台播放器已重新启动，请重试完全退出。")
+                throw WallpaperError.message(L("error.player.theBackgroundPlayerRestartedRetryQuittingCompletely"))
             }
             if !ownedNow && !isProcessRunning(current.pid) { status = nil; return }
             try await Task.sleep(for: .milliseconds(50))
         } while Date() < deadline
-        throw WallpaperError.message("后台播放器仍在运行；请处理壁纸保留提示后，再重试完全退出。")
+        throw WallpaperError.message(L("error.player.theBackgroundPlayerIsStillRunningRespondTo"))
     }
 }
